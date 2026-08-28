@@ -1,10 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = (import.meta.env.VITE_SUPABASE_URL ??
-  import.meta.env.NEXT_PUBLIC_SUPABASE_URL) as string | undefined;
-const publishableKey = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
-  import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) as string | undefined;
+const firstConfiguredValue = (...values: unknown[]) =>
+  values
+    .find(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    )
+    ?.trim();
+
+const url = firstConfiguredValue(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.NEXT_PUBLIC_SUPABASE_URL,
+);
+const publishableKey = firstConfiguredValue(
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+);
 
 export const isSupabaseConfigured = Boolean(
   url && publishableKey && !publishableKey.includes("your-local-anon-key"),
