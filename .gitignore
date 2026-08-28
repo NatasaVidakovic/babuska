@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+.supabase/
+supabase/.temp/
+supabase/.branches/
+.codex/qa/**/screenshots/
+.tmp-*/

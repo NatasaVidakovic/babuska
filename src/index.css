@@ -1,0 +1,137 @@
+@import url("https://fonts.googleapis.com/css2?family=Philosopher:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap");
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+@theme {
+  --font-sans: "Lora", serif;
+  --font-serif: "Philosopher", serif;
+
+  --color-background: #f7f2e9;
+  --color-foreground: #251510;
+
+  --color-card: #fffdfc;
+  --color-card-foreground: #251510;
+
+  --color-primary: #8c1513;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #3d2821;
+  --color-secondary-foreground: #f7f2e9;
+
+  --color-muted: #efe7dc;
+  --color-muted-foreground: #75665e;
+
+  --color-accent: #b34d47;
+  --color-accent-foreground: #251510;
+
+  --color-border: #e3d7ca;
+}
+
+body {
+  @apply bg-background text-foreground antialiased;
+  font-family: "Lora", serif;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+:focus-visible {
+  outline: 2px solid #b34d47;
+  outline-offset: 3px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Philosopher", serif;
+}
+
+/* ── Scrollbar hide ── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ── Nav link hover — no underlines ── */
+.nav-link:hover {
+  color: #8c1513 !important;
+}
+
+/* ── 3D Book page flip — desktop spread ── */
+@keyframes pageFlipNext {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-180deg);
+  }
+}
+@keyframes pageFlipPrev {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ── 3D Mobile page flip ── */
+@keyframes mobileFlipNext {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(-180deg);
+  }
+}
+@keyframes mobileFlipPrev {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ── Flip shadow sweep ── */
+@keyframes flipShadowIn {
+  0% {
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── Star/ornament scatter ── */
+@keyframes starFly {
+  0% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--sx, 0px), var(--sy, -70px)) scale(0.05)
+      rotate(var(--sr, 200deg));
+    opacity: 0;
+  }
+}

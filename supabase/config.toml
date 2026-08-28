@@ -1,0 +1,10 @@
+project_id = "cafe-babuska"
+
+[api]
+port = 54321
+
+[db]
+port = 54332
+
+[studio]
+port = 54323

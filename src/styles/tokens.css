@@ -1,0 +1,713 @@
+:root {
+  --cafe-canvas: #f7f2e9;
+  --cafe-surface: #fffdfc;
+  --cafe-ink: #251510;
+  --cafe-muted: #75665e;
+  --cafe-red: #8c1513;
+  --cafe-red-dark: #68100f;
+  --cafe-gold: #b34d47;
+  --cafe-border: #e3d7ca;
+  --cafe-success: #486a45;
+  --cafe-danger: #9d332a;
+  --cafe-shadow: 0 18px 45px rgba(66, 39, 27, 0.08);
+  --cafe-radius: 14px;
+}
+
+.cafe-site {
+  color: var(--cafe-ink);
+  background: var(--cafe-canvas);
+}
+
+.cafe-site h2 {
+  letter-spacing: -0.018em;
+}
+
+.site-container {
+  width: min(80rem, 100%);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+
+.site-container--book {
+  width: min(65rem, 100%);
+}
+
+.site-section {
+  padding-block: clamp(4.75rem, 8vw, 7rem);
+  scroll-margin-top: 66px;
+}
+
+.site-section--book {
+  padding-top: clamp(3.5rem, 6vw, 5.5rem);
+}
+.site-section--divided {
+  border-top: 1px solid rgba(227, 215, 202, 0.55);
+}
+
+.site-section-heading {
+  margin: 0 auto clamp(2.5rem, 5vw, 4rem);
+  text-align: center;
+}
+
+.site-section-heading h2 {
+  margin: 0;
+  font-family: "Philosopher", serif;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.08;
+}
+
+.site-header__inner {
+  width: 100%;
+  min-height: 60px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  padding-inline: clamp(0.75rem, 2vw, 2rem);
+}
+
+.site-header__brand {
+  justify-self: start;
+}
+.site-header__nav {
+  grid-column: 2;
+  justify-self: center;
+}
+.site-header__actions {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.site-hero {
+  min-height: max(38rem, 100svh);
+}
+
+.site-hero__content {
+  width: min(100%, 44rem);
+  padding-block: clamp(2rem, 7vh, 5rem);
+}
+
+.site-hero__wordmark-frame {
+  position: relative;
+  width: clamp(15rem, 23vw, 20rem);
+  height: clamp(6.5rem, 11vw, 8.5rem);
+  margin-bottom: clamp(0.5rem, 2vh, 1.25rem);
+  overflow: hidden;
+}
+
+.site-hero__wordmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  transform: translateY(-64%);
+}
+
+.site-hero__title {
+  margin: 0 0 clamp(0.85rem, 2vh, 1.25rem);
+  font-family: "Philosopher", serif;
+  font-size: clamp(2.2rem, 4.2vw, 3.65rem);
+  line-height: 1.08;
+  letter-spacing: 0.025em;
+}
+
+.site-hero__description {
+  max-width: 31rem;
+  margin: 0 0 clamp(1.5rem, 4vh, 2.25rem);
+  color: var(--cafe-muted);
+  font-family: "Lora", serif;
+  font-size: clamp(0.86rem, 1.5vw, 0.95rem);
+  font-style: italic;
+  line-height: 1.75;
+}
+
+.site-hero__cta {
+  flex: 0 0 auto;
+}
+
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(1.75rem, 4vw, 3rem);
+  text-align: left;
+}
+
+.site-footer-logo {
+  display: flex;
+  justify-content: center;
+}
+.site-footer-contact {
+  text-align: right;
+}
+
+.cafe-site .nav-link {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+}
+
+.cafe-site a:focus-visible,
+.cafe-site button:focus-visible {
+  border-radius: 3px;
+}
+
+.admin-shell {
+  min-height: 100vh;
+  color: var(--cafe-ink);
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(184, 148, 82, 0.12),
+      transparent 29rem
+    ),
+    var(--cafe-canvas);
+  font-family: "Lora", serif;
+}
+
+.admin-topbar {
+  min-height: 72px;
+  border-bottom: 1px solid var(--cafe-border);
+  background: rgba(255, 253, 252, 0.92);
+  backdrop-filter: blur(14px);
+}
+
+.admin-topbar__inner,
+.admin-content {
+  width: min(1120px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.admin-topbar__inner {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--cafe-ink);
+  text-decoration: none;
+}
+
+.admin-brand__mark {
+  width: 38px;
+  height: 48px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.admin-brand strong {
+  font-family: "Philosopher", serif;
+  font-size: 1.05rem;
+}
+.admin-brand span {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--cafe-muted);
+  font-size: 0.72rem;
+}
+
+.admin-content {
+  padding-block: clamp(2rem, 5vw, 4.5rem);
+}
+
+.admin-page-heading {
+  max-width: 640px;
+  margin-bottom: 2rem;
+}
+.admin-page-heading h1 {
+  margin: 0;
+  font-family: "Philosopher", serif;
+  font-size: clamp(2rem, 4vw, 2.7rem);
+  line-height: 1;
+}
+.admin-page-heading p {
+  margin: 0.7rem 0 0;
+  color: var(--cafe-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 1.4rem;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 1.75rem;
+  overflow-x: auto;
+  background: transparent;
+}
+.admin-tab {
+  min-height: 34px;
+  padding: 0 0 0.55rem;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  color: var(--cafe-muted);
+  background: transparent;
+  font-family: "Lora", serif;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.admin-tab:hover {
+  color: var(--cafe-red);
+}
+.admin-tab[aria-selected="true"] {
+  border-bottom-color: var(--cafe-gold);
+  color: var(--cafe-red);
+  background: transparent;
+  box-shadow: none;
+}
+
+.admin-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  max-width: 800px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.25rem;
+  border: 0;
+  border-left: 3px solid var(--cafe-gold);
+  border-radius: 0 10px 10px 0;
+  color: var(--cafe-muted);
+  background: rgba(255, 253, 252, 0.7);
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+.admin-status[data-tone="error"] {
+  border-left-color: var(--cafe-danger);
+  color: #7f2921;
+}
+.admin-status[data-tone="success"] {
+  border-left-color: var(--cafe-success);
+  color: #385936;
+}
+
+.admin-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.admin-panel--narrow {
+  max-width: 720px;
+}
+.admin-panel + .admin-panel {
+  margin-top: 2.5rem;
+}
+.admin-panel__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.admin-panel__heading h2 {
+  margin: 0;
+  font-family: "Philosopher", serif;
+  font-size: 1.55rem;
+  line-height: 1.1;
+}
+.admin-panel__heading p {
+  max-width: 560px;
+  margin: 0.35rem 0 0;
+  color: var(--cafe-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.admin-field {
+  display: grid;
+  gap: 0.42rem;
+}
+.admin-field--full {
+  grid-column: 1 / -1;
+}
+.admin-field > label,
+.admin-field__label {
+  color: var(--cafe-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.admin-field small {
+  color: var(--cafe-muted);
+  font-size: 0.7rem;
+}
+.admin-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.72rem 0.82rem;
+  border: 0;
+  border-radius: 8px;
+  color: var(--cafe-ink);
+  background: #f5eee6;
+  box-shadow: inset 0 0 0 1px transparent;
+  font: inherit;
+  font-size: 0.88rem;
+}
+.admin-input:hover {
+  background: #f1e7dc;
+}
+.admin-input:focus {
+  outline: 0;
+  background: #fffdfc;
+  box-shadow: 0 0 0 3px rgba(184, 148, 82, 0.16);
+}
+.admin-input:disabled {
+  cursor: not-allowed;
+  color: var(--cafe-muted);
+  background: #f3ede5;
+}
+.admin-textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+.admin-button {
+  min-height: 42px;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--cafe-red);
+  font:
+    600 0.72rem "Lora",
+    serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.admin-button:hover:not(:disabled) {
+  background: var(--cafe-red-dark);
+  transform: translateY(-1px);
+}
+.admin-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.admin-button--wide {
+  width: 100%;
+}
+.admin-button--secondary {
+  color: var(--cafe-muted);
+  background: transparent;
+}
+.admin-button--secondary:hover:not(:disabled) {
+  color: var(--cafe-red);
+  background: transparent;
+}
+.admin-button--danger {
+  color: var(--cafe-danger);
+  background: transparent;
+  border-color: transparent;
+}
+.admin-button--danger:hover:not(:disabled) {
+  color: #fff;
+  background: var(--cafe-danger);
+}
+.admin-link {
+  color: var(--cafe-muted);
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+.admin-link:hover {
+  color: var(--cafe-red);
+}
+
+.admin-record-list {
+  display: grid;
+  gap: 0.35rem;
+  background: transparent;
+}
+.admin-record {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.admin-record__image {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.admin-record__content {
+  min-width: 0;
+  flex: 1;
+}
+.admin-record__title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Philosopher", serif;
+  font-size: 1.08rem;
+}
+.admin-record__meta {
+  margin-top: 0.2rem;
+  color: var(--cafe-muted);
+  font-size: 0.75rem;
+}
+.admin-record__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.admin-empty {
+  padding: 2rem 1.25rem;
+  color: var(--cafe-muted);
+  text-align: center;
+  font-size: 0.88rem;
+}
+.admin-language-switch {
+  display: flex;
+  gap: 0.55rem;
+}
+.admin-language-switch button {
+  padding: 0.25rem 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  color: var(--cafe-muted);
+  background: transparent;
+  font:
+    600 0.72rem "Lora",
+    serif;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+}
+.admin-language-switch button[aria-pressed="true"] {
+  border-bottom-color: var(--cafe-gold);
+  color: var(--cafe-red);
+}
+.admin-media-upload {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.admin-media-upload__label {
+  grid-column: 1 / -1;
+  color: var(--cafe-muted);
+  font-size: 0.73rem;
+}
+.admin-media-upload__preview {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+.admin-media-upload__trigger {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  color: var(--cafe-red);
+  background: #fffaf4;
+  font:
+    600 0.72rem "Lora",
+    serif;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.admin-media-upload__trigger:hover {
+  background: #f4e8df;
+}
+.admin-media-upload__trigger input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.admin-media-upload small {
+  grid-column: 1 / -1;
+  color: var(--cafe-muted);
+  font-size: 0.7rem;
+}
+.admin-checkbox {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.72rem 0.82rem;
+  border-radius: 8px;
+  color: var(--cafe-muted);
+  background: #f5eee6;
+  font-size: 0.84rem;
+}
+.admin-checkbox input {
+  accent-color: var(--cafe-red);
+}
+
+.admin-login {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(184, 148, 82, 0.16),
+      transparent 28rem
+    ),
+    var(--cafe-canvas);
+}
+.admin-login__card {
+  width: min(100%, 430px);
+  padding: clamp(1.5rem, 6vw, 2.7rem);
+  border: 0;
+  border-radius: 18px;
+  background: rgba(255, 253, 252, 0.96);
+  box-shadow: var(--cafe-shadow);
+}
+.admin-login__mark {
+  display: block;
+  width: 104px;
+  height: 130px;
+  margin: 0 auto 1rem;
+  object-fit: contain;
+}
+.admin-login__title {
+  margin: 0;
+  text-align: center;
+  font-family: "Philosopher", serif;
+  font-size: 2rem;
+}
+.admin-login__copy {
+  margin: 0.45rem 0 1.75rem;
+  color: var(--cafe-muted);
+  text-align: center;
+  font-size: 0.86rem;
+}
+.admin-login__language {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.25rem;
+}
+.admin-login__language button {
+  padding: 0.25rem;
+  border: 0;
+  color: var(--cafe-red);
+  background: transparent;
+  font:
+    600 0.72rem "Lora",
+    serif;
+  cursor: pointer;
+}
+.admin-login__back {
+  margin: 1.35rem 0 0;
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .admin-topbar__inner {
+    align-items: flex-start;
+    padding-block: 0.85rem;
+  }
+  .admin-topbar__actions {
+    max-width: 62%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding-top: 0.18rem;
+  }
+  .admin-brand span {
+    display: none;
+  }
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-field--full {
+    grid-column: auto;
+  }
+  .admin-record {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .admin-record__actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 62px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .site-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    text-align: center;
+  }
+  .site-footer-contact {
+    text-align: center;
+  }
+  .site-footer-logo {
+    grid-row: 2;
+  }
+}
+
+@media (max-width: 767px) {
+  .site-header__inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .site-header__actions {
+    grid-column: 2;
+  }
+  .site-section {
+    scroll-margin-top: 60px;
+  }
+}
+
+@media (max-width: 520px) {
+  .site-hero__content {
+    padding-top: 2.25rem;
+    padding-bottom: 2rem;
+  }
+  .site-hero__wordmark-frame {
+    width: min(15rem, 78vw);
+    height: 6.25rem;
+  }
+  .site-hero__title {
+    font-size: clamp(2rem, 10vw, 2.65rem);
+  }
+  .site-footer-grid {
+    grid-template-columns: 1fr;
+  }
+  .site-footer-logo {
+    grid-row: auto;
+  }
+}
