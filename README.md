@@ -66,7 +66,7 @@ npm run check:local
 2. Create the production Auth administrator and insert its user ID into `public.admin_users`.
 3. Run `npm run migrate:media` with production admin credentials if legacy external media exists.
 4. Run the demo seed only if demo content is wanted in production.
-5. Configure only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel.
+5. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Vercel. The official Vercel Supabase integration is also supported through its public `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` variables.
 6. Deploy the repository as a Vite project; `vercel.json` already provides SPA routing and baseline security headers.
 7. Run the public/admin smoke flows against the deployed URL before opening the site to visitors.
 

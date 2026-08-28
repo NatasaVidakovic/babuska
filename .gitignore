@@ -8,3 +8,5 @@ supabase/.temp/
 supabase/.branches/
 .codex/qa/**/screenshots/
 .tmp-*/
+
+.vercel
