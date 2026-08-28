@@ -32,6 +32,10 @@ try {
       const cta = document
         .querySelector(".site-hero__cta")
         ?.getBoundingClientRect();
+      const hero = document.querySelector(".site-hero")?.getBoundingClientRect();
+      const heroOrnaments = [
+        ...document.querySelectorAll(".site-hero__ornament"),
+      ].map((node) => node.getBoundingClientRect());
       const containers = [...document.querySelectorAll(".site-container")].map(
         (node) => node.getBoundingClientRect(),
       );
@@ -56,6 +60,17 @@ try {
             : 0,
         ctaVisible: Boolean(
           cta && cta.top >= 0 && cta.bottom <= window.innerHeight,
+        ),
+        ornamentsFitHero: Boolean(
+          hero &&
+            heroOrnaments.length === 4 &&
+            heroOrnaments.every(
+              (rect) =>
+                rect.left >= hero.left - 1 &&
+                rect.right <= hero.right + 1 &&
+                rect.top >= hero.top - 1 &&
+                rect.bottom <= hero.bottom + 1,
+            ),
         ),
         centered: containers.every(
           (rect) =>
@@ -86,6 +101,10 @@ try {
     if (!result.ctaVisible)
       throw new Error(
         `${viewport.width}x${viewport.height}: hero CTA is outside the initial viewport`,
+      );
+    if (!result.ornamentsFitHero)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: hero ornaments overflow or are incomplete`,
       );
     if (!result.centered)
       throw new Error(

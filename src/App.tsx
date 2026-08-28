@@ -53,11 +53,11 @@ const T = {
     hero_title: "Укус Москве у Бањој Луци",
     hero_sub:
       "Ексклузивни напици, фини чајеви и руско гостопримство — послужени с тихом, спокојном топлином.",
-    hero_cta: "Истражи Мени",
-    menu_overline: "Наша Понуда",
+    hero_cta: "Истражи мени",
+    menu_overline: "Наша понуда",
     menu_heading: "Откриј нове укусе",
     menu_hint: "Кликните на картицу за причу — поново за фотографију",
-    book_overline: "Комплетна Понуда",
+    book_overline: "Комплетна понуда",
     book_heading: "Мени",
     book_hint: "Листајте као праву књигу — 50 напитака на 10 страница",
     book_running_head: "Кафе Бабушка",
@@ -69,7 +69,7 @@ const T = {
     footer_addr_1: "Господска улица 14",
     footer_addr_2: "78000 Бања Лука",
     footer_addr_3: "Босна и Херцеговина",
-    footer_hours_heading: "Радно Вријеме",
+    footer_hours_heading: "Радно вријеме",
     footer_h1: "Пон – Пет: 08:00 – 23:00",
     footer_h2: "Субота: 09:00 – 00:00",
     footer_h3: "Недјеља: 09:00 – 22:00",
@@ -220,23 +220,28 @@ const bookDrinks: BookDrink[] = [
 const galleryImages = [
   {
     src: "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=900&h=700&fit=crop&auto=format",
-    alt: "Cafe interior",
+    altSr: "Унутрашњост кафеа",
+    altEn: "Café interior",
   },
   {
     src: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=500&fit=crop&auto=format",
-    alt: "Cafe table",
+    altSr: "Сто у кафеу",
+    altEn: "Café table",
   },
   {
     src: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=500&fit=crop&auto=format",
-    alt: "Coffee detail",
+    altSr: "Детаљ кафе",
+    altEn: "Coffee detail",
   },
   {
     src: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=500&fit=crop&auto=format",
-    alt: "Warm atmosphere",
+    altSr: "Топла атмосфера",
+    altEn: "Warm atmosphere",
   },
   {
     src: "https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=600&h=500&fit=crop&auto=format",
-    alt: "Cafe corner",
+    altSr: "Кутак у кафеу",
+    altEn: "Café corner",
   },
 ];
 
@@ -415,9 +420,64 @@ function MenuCard({ item }: { item: MenuItem }) {
 }
 
 // ── Book menu — single item row ───────────────────────────────────────
+const bookNamesSr: Record<string, string> = {
+  Espresso: "Еспресо",
+  Doppio: "Дупли еспресо",
+  Ristretto: "Ристрето",
+  Lungo: "Лунго",
+  Americano: "Американо",
+  Cappuccino: "Капућино",
+  "Caffè Latte": "Кафе лате",
+  "Flat White": "Флет вајт",
+  Macchiato: "Макијато",
+  Cortado: "Кортадо",
+  "Moscow Raf": "Московски раф",
+  "Pine Nut Latte": "Лате са пињолима",
+  "Spiced Mocha": "Зачињена мока",
+  "Rose Cardamom Latte": "Лате са ружом и кардамомом",
+  "Honey Cinnamon Latte": "Лате са медом и циметом",
+  "Lavender Fog": "Лавандин облак",
+  "Salted Caramel Raf": "Раф са сланом карамелом",
+  "Vienna Coffee": "Бечка кафа",
+  "Pistachio Raf": "Раф са пистаћима",
+  "Tsarina's Latte": "Царичин лате",
+  "Imperial Black Tea": "Царски црни чај",
+  "Samovar Chai": "Самовар чај",
+  "Siberian Berry Tea": "Сибирски чај од бобица",
+  "Jasmine Green": "Зелени чај са јасмином",
+  "Camomile & Honey": "Камилица и мед",
+  "Crimson Berry Infusion": "Инфузија црвених бобица",
+  "Mint Sencha": "Сенча са ментом",
+  "White Peony": "Бијели божур",
+  "Rose Hip & Ginger": "Шипак и ђумбир",
+  "Earl Grey Royal": "Краљевски ерл греј",
+  "Cold Brew": "Хладно екстрахована кафа",
+  "Iced Raf": "Ледени раф",
+  "Iced Lavender Latte": "Ледени лате са лавандом",
+  "Matcha Lemonade": "Мача лимунада",
+  "Sparkling Elderflower": "Газирана базга",
+  "Cold Brew Tonic": "Тоник са хладно екстрахованом кафом",
+  "Iced Matcha": "Ледена мача",
+  "Watermelon Mint": "Лубеница и мента",
+  "Yuzu Lemonade": "Јузу лимунада",
+  "Cold Brew Float": "Хладно екстрахована кафа са сладоледом",
+  "Dark Chocolate Pot": "Тамна топла чоколада",
+  "White Choco Raspberry": "Бијела чоколада и малина",
+  "Golden Milk": "Златно млијеко",
+  "Aztec Spiced Cacao": "Астечки зачињени какао",
+  "Praline Velvet": "Свилени пралине",
+  "Babuška Special": "Бабушка специјалитет",
+  "Tsar's Blend": "Царска мјешавина",
+  "Kremlin Elixir": "Кремљински еликсир",
+  "Saffron Raf": "Раф са шафраном",
+  "Fresh Lemonade": "Свјежа лимунада",
+  "Ginger Lemon Fizz": "Лимунада са ђумбиром",
+};
+
 function BookItem({ item }: { item: BookDrink }) {
   const lang = React.useContext(LangContext);
   const catLabel = T[lang].book_cat[item.category] ?? item.category;
+  const name = lang === "sr" ? (bookNamesSr[item.name] ?? item.name) : item.name;
   return (
     <div
       data-book-item
@@ -443,7 +503,7 @@ function BookItem({ item }: { item: BookDrink }) {
             textOverflow: "ellipsis",
           }}
         >
-          {item.name}
+          {name}
         </span>
         <span
           style={{
@@ -1508,7 +1568,10 @@ function LandingPage() {
           ? [{ src: item.image, alt, srcSet: mediaSrcSet(item.imageVariants) }]
           : [];
       })
-    : galleryImages;
+    : galleryImages.map((item) => ({
+        src: item.src,
+        alt: localizedText(item.altSr, item.altEn, lang) ?? item.altSr,
+      }));
   const stableHeroSources = [640, 1280, 1920]
     .map((width) => ({
       width,
@@ -1611,6 +1674,9 @@ function LandingPage() {
           )}
           <button
             onClick={() => setLang(l)}
+            aria-label={
+              l === "sr" ? "Српски језик, ћирилица" : "English language"
+            }
             style={{
               fontFamily: "Lora, serif",
               fontSize: "10px",
@@ -1625,7 +1691,7 @@ function LandingPage() {
               transition: "color 0.2s",
             }}
           >
-            {l.toUpperCase()}
+            {l === "sr" ? "СР" : "EN"}
           </button>
         </React.Fragment>
       ))}
@@ -1681,7 +1747,13 @@ function LandingPage() {
                 className="flex flex-col justify-center items-center w-10 h-10 gap-[5px]"
                 onClick={() => setMobileNavOpen((v) => !v)}
                 aria-label={
-                  lang === "sr" ? "Отвори навигацију" : "Open navigation"
+                  mobileNavOpen
+                    ? lang === "sr"
+                      ? "Затвори навигацију"
+                      : "Close navigation"
+                    : lang === "sr"
+                      ? "Отвори навигацију"
+                      : "Open navigation"
                 }
                 aria-expanded={mobileNavOpen}
               >
@@ -1804,16 +1876,16 @@ function LandingPage() {
             />
           </div>
 
-          <div className="absolute top-[76px] left-5 md:left-9">
+          <div className="site-hero__ornament site-hero__ornament--top site-hero__ornament--left">
             <CornerOrnament rotate={0} />
           </div>
-          <div className="absolute top-[76px] right-5 md:right-9">
+          <div className="site-hero__ornament site-hero__ornament--top site-hero__ornament--right">
             <CornerOrnament rotate={90} />
           </div>
-          <div className="absolute bottom-16 left-5 md:left-9">
+          <div className="site-hero__ornament site-hero__ornament--bottom site-hero__ornament--left">
             <CornerOrnament rotate={270} />
           </div>
-          <div className="hero-loader-slot absolute bottom-16 right-5 md:right-9">
+          <div className="site-hero__ornament site-hero__ornament--bottom site-hero__ornament--right hero-loader-slot">
             {heroLoadState === "loading" ? (
               <HeroLoader
                 label={

@@ -19,6 +19,7 @@ import {
   uploadImage,
   type MediaFolder,
 } from "./lib/media";
+import { isCyrillicContent } from "./lib/cyrillic";
 import { mediaVariantPaths, parseMediaVariants } from "./lib/media-variants";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
@@ -322,6 +323,17 @@ export default function Admin() {
   const [editingCategory, setEditingCategory] = useState(false);
   const [uploading, setUploading] = useState<MediaFolder | null>(null);
   const tr = (sr: string, en: string) => adminText(uiLanguage, sr, en);
+  const validateCyrillic = (values: string[]) => {
+    if (isCyrillicContent(values)) return true;
+    notice(
+      tr(
+        "Српски текст мора бити унесен ћирилицом.",
+        "Serbian content must be entered in Cyrillic.",
+      ),
+      "error",
+    );
+    return false;
+  };
   const notice = (text: string, tone: "success" | "error") =>
     setFeedback({ text, tone });
 
@@ -463,7 +475,7 @@ export default function Admin() {
     if (!isSupabaseConfigured) {
       notice(
         tr(
-          "Supabase позадински систем није покренут.",
+          "Позадински систем није покренут.",
           "Supabase backend is not running.",
         ),
         "error",
@@ -543,6 +555,7 @@ export default function Admin() {
       );
       return;
     }
+    if (!validateCyrillic([nameSr])) return;
     const payload = {
       name: nameSr,
       name_sr: nameSr,
@@ -605,6 +618,10 @@ export default function Admin() {
       );
       return;
     }
+    if (
+      !validateCyrillic([draft.nameSr, draft.descriptionSr, draft.factSr])
+    )
+      return;
     const oldPath = editingItem
       ? (items.find((item) => item.id === draft.id)?.storagePath ?? "")
       : "";
@@ -703,6 +720,7 @@ export default function Admin() {
       );
       return;
     }
+    if (!validateCyrillic([galleryDraft.altSr])) return;
     const oldPath = editingGallery
       ? (galleryItems.find((item) => item.id === galleryDraft.id)
           ?.storagePath ?? "")
@@ -795,6 +813,24 @@ export default function Admin() {
     successMessage: string,
   ) => {
     event.preventDefault();
+    if (
+      !validateCyrillic([
+        settings.heroTitleSr,
+        settings.heroDescriptionSr,
+        settings.heroCtaSr,
+        settings.footerAddressHeadingSr,
+        settings.footerAddressLine1Sr,
+        settings.footerAddressLine2Sr,
+        settings.footerAddressLine3Sr,
+        settings.footerHoursHeadingSr,
+        settings.footerHoursLine1Sr,
+        settings.footerHoursLine2Sr,
+        settings.footerHoursLine3Sr,
+        settings.footerContactHeadingSr,
+        settings.footerCopyrightSr,
+      ])
+    )
+      return;
     const { error } = await supabase
       .from("site_settings")
       .upsert(settingsPayload(settings));
@@ -1013,8 +1049,8 @@ export default function Admin() {
                 <h2>{tr("Почетни екран и подножје", "Homepage and footer")}</h2>
                 <p>
                   {tr(
-                    "Унесите комплетан садржај на оба језика.",
-                    "Complete the content in both languages.",
+                    "Изаберите језик, па уредите текст који се приказује на почетној и у подножју сајта.",
+                    "Choose a language, then edit the text shown on the homepage and in the footer.",
                   )}
                 </p>
               </div>
@@ -1024,8 +1060,17 @@ export default function Admin() {
                 language={uiLanguage}
               />
             </div>
-            <div className="admin-form-grid">
-              <Field label={tr("Почетна слика", "Hero image")} full>
+            <div className="admin-content-section">
+              <div className="admin-content-section__heading">
+                <h3>{tr("Почетна слика и увод", "Homepage image and introduction")}</h3>
+                <p>{tr("Ови елементи се приказују на врху почетне странице.", "These elements appear at the top of the homepage.")}</p>
+              </div>
+              <div className="admin-form-grid">
+              <Field
+                label={tr("Почетна слика", "Hero image")}
+                hint={tr("Позадинска слика преко цијелог почетног екрана.", "Background image across the full homepage hero.")}
+                full
+              >
                 <MediaUpload
                   label={tr("Слика почетног екрана", "Homepage image")}
                   value={settings.heroImage}
@@ -1034,10 +1079,15 @@ export default function Admin() {
                   onUpload={(file) => uploadFor(file, "hero")}
                 />
               </Field>
-              <Field label={tr("Наслов на почетној", "Homepage title")} full>
+              <Field
+                label={tr("Наслов на почетној", "Homepage title")}
+                hint={tr("Велики наслов у средини почетне слике.", "Large heading centred on the homepage image.")}
+                full
+              >
                 <textarea
                   className="admin-input admin-textarea"
                   value={localizedSetting("heroTitle")}
+                  placeholder={tr("Укус Москве у Бањој Луци", "A Taste of Moscow in Banja Luka")}
                   onChange={(event) =>
                     updateLocalizedSetting("heroTitle", event.target.value)
                   }
@@ -1045,11 +1095,13 @@ export default function Admin() {
               </Field>
               <Field
                 label={tr("Опис на почетној", "Homepage description")}
+                hint={tr("Кратак текст испод великог наслова.", "Short copy directly below the main heading.")}
                 full
               >
                 <textarea
                   className="admin-input admin-textarea"
                   value={localizedSetting("heroDescription")}
+                  placeholder={tr("Ексклузивни напици, фини чајеви и руско гостопримство.", "Exclusive drinks, fine teas, and Russian hospitality.")}
                   onChange={(event) =>
                     updateLocalizedSetting(
                       "heroDescription",
@@ -1058,19 +1110,36 @@ export default function Admin() {
                   }
                 />
               </Field>
-              <Field label={tr("Текст дугмета", "Button text")} full>
+              <Field
+                label={tr("Текст дугмета", "Button text")}
+                hint={tr("Црвено дугме које води до менија.", "Red button that takes visitors to the menu.")}
+                full
+              >
                 <input
                   className="admin-input"
                   value={localizedSetting("heroCta")}
+                  placeholder={tr("Истражи мени", "Explore menu")}
                   onChange={(event) =>
                     updateLocalizedSetting("heroCta", event.target.value)
                   }
                 />
               </Field>
-              <Field label={tr("Наслов адресе", "Address heading")}>
+              </div>
+            </div>
+            <div className="admin-content-section">
+              <div className="admin-content-section__heading">
+                <h3>{tr("Подножје сајта", "Website footer")}</h3>
+                <p>{tr("Ови текстови се приказују у доњем дијелу сваке странице.", "These texts appear at the bottom of every page.")}</p>
+              </div>
+              <div className="admin-form-grid">
+              <Field
+                label={tr("Наслов адресе", "Address heading")}
+                hint={tr("Подножје → прва колона.", "Footer → first column.")}
+              >
                 <input
                   className="admin-input"
                   value={localizedSetting("footerAddressHeading")}
+                  placeholder={tr("Адреса", "Address")}
                   onChange={(event) =>
                     updateLocalizedSetting(
                       "footerAddressHeading",
@@ -1079,10 +1148,14 @@ export default function Admin() {
                   }
                 />
               </Field>
-              <Field label={tr("Наслов контакта", "Contact heading")}>
+              <Field
+                label={tr("Наслов контакта", "Contact heading")}
+                hint={tr("Подножје → колона са телефоном и е-поштом.", "Footer → column with phone and email.")}
+              >
                 <input
                   className="admin-input"
                   value={localizedSetting("footerContactHeading")}
+                  placeholder={tr("Контакт", "Contact")}
                   onChange={(event) =>
                     updateLocalizedSetting(
                       "footerContactHeading",
@@ -1095,11 +1168,19 @@ export default function Admin() {
                 <Field
                   key={`address-${line}`}
                   label={tr(`Адреса — ${line}. ред`, `Address — line ${line}`)}
+                  hint={tr(`Подножје → Адреса → ${line}. ред.`, `Footer → Address → line ${line}.`)}
                   full
                 >
                   <input
                     className="admin-input"
                     value={localizedSetting(`footerAddressLine${line}`)}
+                    placeholder={
+                      line === 1
+                        ? tr("Господска улица 14", "Gospodska Street 14")
+                        : line === 2
+                          ? tr("78000 Бања Лука", "78000 Banja Luka")
+                          : tr("Босна и Херцеговина", "Bosnia and Herzegovina")
+                    }
                     onChange={(event) =>
                       updateLocalizedSetting(
                         `footerAddressLine${line}` as LocalizedSetting,
@@ -1111,11 +1192,13 @@ export default function Admin() {
               ))}
               <Field
                 label={tr("Наслов радног времена", "Opening-hours heading")}
+                hint={tr("Подножје → средња колона.", "Footer → middle column.")}
                 full
               >
                 <input
                   className="admin-input"
                   value={localizedSetting("footerHoursHeading")}
+                  placeholder={tr("Радно вријеме", "Opening hours")}
                   onChange={(event) =>
                     updateLocalizedSetting(
                       "footerHoursHeading",
@@ -1131,11 +1214,19 @@ export default function Admin() {
                     `Радно вријеме — ${line}. ред`,
                     `Opening hours — line ${line}`,
                   )}
+                  hint={tr(`Подножје → Радно вријеме → ${line}. ред.`, `Footer → Opening hours → line ${line}.`)}
                   full
                 >
                   <input
                     className="admin-input"
                     value={localizedSetting(`footerHoursLine${line}`)}
+                    placeholder={
+                      line === 1
+                        ? tr("Понедјељак – петак: 08:00 – 23:00", "Monday – Friday: 08:00 – 23:00")
+                        : line === 2
+                          ? tr("Субота: 09:00 – 00:00", "Saturday: 09:00 – 00:00")
+                          : tr("Недјеља: 09:00 – 22:00", "Sunday: 09:00 – 22:00")
+                    }
                     onChange={(event) =>
                       updateLocalizedSetting(
                         `footerHoursLine${line}` as LocalizedSetting,
@@ -1145,10 +1236,15 @@ export default function Admin() {
                   />
                 </Field>
               ))}
-              <Field label={tr("Ауторска права", "Copyright")} full>
+              <Field
+                label={tr("Ауторска права", "Copyright")}
+                hint={tr("Најдоњи ред подножја, испод свих колона.", "Bottom-most footer line, below all columns.")}
+                full
+              >
                 <input
                   className="admin-input"
                   value={localizedSetting("footerCopyright")}
+                  placeholder={tr("© 2026 Кафе Бабушка · Бања Лука", "© 2026 Café Babuska · Banja Luka")}
                   onChange={(event) =>
                     updateLocalizedSetting(
                       "footerCopyright",
@@ -1157,6 +1253,7 @@ export default function Admin() {
                   }
                 />
               </Field>
+              </div>
             </div>
             <div className="admin-actions">
               <button className="admin-button" disabled={uploading === "hero"}>
@@ -1491,7 +1588,7 @@ export default function Admin() {
                   </h2>
                   <p>
                     {tr(
-                      "Слика се преноси директно у Supabase Storage.",
+                      "Слика се преноси директно у сигурно складиште.",
                       "The image uploads directly to Supabase Storage.",
                     )}
                   </p>
@@ -1645,34 +1742,48 @@ export default function Admin() {
                 </h2>
                 <p>
                   {tr(
-                    "Празан URL сакрива одговарајућу икону.",
+                    "Празан линк сакрива одговарајућу икону.",
                     "An empty URL hides the corresponding icon.",
                   )}
                 </p>
               </div>
             </div>
             <div className="admin-form-grid">
-              <Field label={tr("Телефон", "Phone")} full>
+              <Field
+                label={tr("Телефон", "Phone")}
+                hint={tr("Подножје → Контакт. Клик на број позива телефон.", "Footer → Contact. Visitors can tap the number to call.")}
+                full
+              >
                 <input
                   className="admin-input"
                   type="tel"
                   value={settings.phone}
+                  placeholder="+387 65 000 000"
                   onChange={(event) =>
                     setSettings({ ...settings, phone: event.target.value })
                   }
                 />
               </Field>
-              <Field label={tr("Е-пошта", "Email")} full>
+              <Field
+                label={tr("Е-пошта", "Email")}
+                hint={tr("Подножје → Контакт. Клик отвара нову е-пошту.", "Footer → Contact. Visitors can tap it to email you.")}
+                full
+              >
                 <input
                   className="admin-input"
                   type="email"
                   value={settings.email}
+                  placeholder="hello@cafebabuska.ba"
                   onChange={(event) =>
                     setSettings({ ...settings, email: event.target.value })
                   }
                 />
               </Field>
-              <Field label={tr("Корисничко име", "Handle")} full>
+              <Field
+                label={tr("Корисничко име", "Handle")}
+                hint={tr("Приказује се испод контакт података у подножју.", "Shown below the contact details in the footer.")}
+                full
+              >
                 <input
                   className="admin-input"
                   value={settings.socialHandle}
@@ -1685,7 +1796,11 @@ export default function Admin() {
                   }
                 />
               </Field>
-              <Field label="Instagram" full>
+              <Field
+                label={tr("Инстаграм", "Instagram")}
+                hint={tr("Линк за Инстаграм икону у подножју. Оставите празно да је сакријете.", "Link for the Instagram icon in the footer. Leave empty to hide it.")}
+                full
+              >
                 <input
                   className="admin-input"
                   type="url"
@@ -1696,7 +1811,11 @@ export default function Admin() {
                   }
                 />
               </Field>
-              <Field label="Facebook" full>
+              <Field
+                label={tr("Фејсбук", "Facebook")}
+                hint={tr("Линк за Фејсбук икону у подножју. Оставите празно да је сакријете.", "Link for the Facebook icon in the footer. Leave empty to hide it.")}
+                full
+              >
                 <input
                   className="admin-input"
                   type="url"
@@ -1707,7 +1826,11 @@ export default function Admin() {
                   }
                 />
               </Field>
-              <Field label="TikTok" full>
+              <Field
+                label={tr("ТикТок", "TikTok")}
+                hint={tr("Линк за ТикТок икону у подножју. Оставите празно да је сакријете.", "Link for the TikTok icon in the footer. Leave empty to hide it.")}
+                full
+              >
                 <input
                   className="admin-input"
                   type="url"
