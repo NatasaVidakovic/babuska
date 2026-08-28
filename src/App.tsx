@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Routes, Route } from "react-router-dom";
 import brandLogo from "./assets/brand/logo-babuska.webp";
 import heroWordmark from "./assets/brand/logo-wordmark.webp";
+import defaultHomeHero from "./assets/hero/default-home.webp";
 import HeroLoader from "./components/HeroLoader";
 import DeferredSection from "./components/DeferredSection";
 import {
@@ -1517,16 +1518,19 @@ function LandingPage() {
   const configuredHeroSources = Object.values(
     siteSettings.heroImageVariants,
   ).sort((left, right) => left.width - right.width);
-  const initialHeroSources = publicSupabaseConfig
-    ? stableHeroSources
-    : configuredHeroSources;
+  const hasConfiguredHero = Boolean(
+    siteSettings.heroImage || configuredHeroSources.length,
+  );
+  const initialHeroSources = hasConfiguredHero
+    ? publicSupabaseConfig
+      ? stableHeroSources
+      : configuredHeroSources
+    : [];
   const [preferLegacyHero, setPreferLegacyHero] = useState(false);
   const heroImage =
     (preferLegacyHero ? siteSettings.heroImage : initialHeroSources.at(-1)?.url) ||
     siteSettings.heroImage ||
-    (!publicSupabaseConfig
-      ? "https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=1920&h=1080&fit=crop&auto=format"
-      : "");
+    defaultHomeHero;
   const heroSrcSet = preferLegacyHero
     ? ""
     : initialHeroSources
