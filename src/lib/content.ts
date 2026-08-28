@@ -1,3 +1,5 @@
+import type { MediaVariants } from "./media-variants";
+
 export type Lang = "sr" | "en";
 
 export type MenuCategory = {
@@ -15,6 +17,7 @@ export type AdminMenuItem = {
   price: string;
   image: string;
   storagePath: string;
+  imageVariants: MediaVariants;
   descriptionSr: string;
   descriptionEn: string;
   factSr: string;
@@ -25,6 +28,7 @@ export type AdminGalleryItem = {
   id: string;
   image: string;
   storagePath: string;
+  imageVariants: MediaVariants;
   altSr: string;
   altEn: string;
   sortOrder: number;
@@ -40,6 +44,7 @@ export type SiteSettings = {
   socialHandle: string;
   heroImage: string;
   heroImageStoragePath: string;
+  heroImageVariants: MediaVariants;
   heroTitleSr: string;
   heroTitleEn: string;
   heroDescriptionSr: string;
@@ -73,7 +78,12 @@ export type LocalizedMenuCategory = Pick<MenuCategory, "id" | "sortOrder"> & {
 };
 export type LocalizedMenuItem = Pick<
   AdminMenuItem,
-  "id" | "categoryId" | "price" | "image" | "storagePath"
+  | "id"
+  | "categoryId"
+  | "price"
+  | "image"
+  | "storagePath"
+  | "imageVariants"
 > & {
   name: string;
   description: string;
@@ -130,6 +140,7 @@ export function localizeMenuItem(
     price: item.price.trim(),
     image: item.image,
     storagePath: item.storagePath,
+    imageVariants: item.imageVariants,
     name,
     description,
     fact,

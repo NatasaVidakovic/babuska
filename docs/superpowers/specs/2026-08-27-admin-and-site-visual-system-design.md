@@ -78,3 +78,11 @@ The test uses a uniquely named temporary data set so it cannot be confused with 
 - No default category filter is rendered.
 - The SR/EN switch does not alter the hero image crop or geometry.
 - Smoke-test records and temporary social values do not remain after verification.
+
+## Validation record
+
+- `npm run build` passed after the token and admin-panel changes.
+- `npm run smoke:content -- setup` passed with a temporary category, a menu item, an item update, three social-link updates, public-read checks and an anonymous-write RLS rejection.
+- The public browser check confirmed the temporary category filter, updated drink card and all three saved social links; `npm run smoke:content -- cleanup` then removed only the temporary category/item and restored the original social values.
+- Desktop SR/EN check confirmed the same hero source and a 720px hero height before and after the language switch.
+- A 390px-wide mobile check confirmed a visible mobile navigation control and no horizontal overflow.

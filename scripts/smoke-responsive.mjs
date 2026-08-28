@@ -43,7 +43,7 @@ try {
       });
       const contentImages = [
         ...document.querySelectorAll(
-          "#menu img, #gallery img, .site-hero > div:first-child > img",
+          "#menu img, #gallery img, .site-hero__image",
         ),
       ];
       return {
@@ -108,7 +108,9 @@ try {
         `${viewport.width}x${viewport.height}: Serbian Cyrillic is not the document default`,
       );
 
+    await page.locator(".site-section--book").scrollIntoViewIfNeeded();
     const bookFrame = page.locator("[data-book-frame]");
+    await bookFrame.waitFor({ state: "visible", timeout: 5_000 });
     const bookHeightBefore = (await bookFrame.boundingBox())?.height ?? 0;
     const nextBookButton = page
       .locator('[data-testid="dynamic-book-menu"] button:not([disabled])')
@@ -141,15 +143,15 @@ try {
   });
   await languagePage.goto(baseUrl, { waitUntil: "networkidle" });
   const heroBefore = await languagePage
-    .locator(".site-hero > div:first-child > img")
-    .getAttribute("src");
+    .locator(".site-hero__image")
+    .evaluate((image) => image.currentSrc);
   await languagePage
     .getByRole("button", { name: "EN", exact: true })
     .filter({ visible: true })
     .click();
   const heroAfter = await languagePage
-    .locator(".site-hero > div:first-child > img")
-    .getAttribute("src");
+    .locator(".site-hero__image")
+    .evaluate((image) => image.currentSrc);
   const languageState = await languagePage.evaluate(() => ({
     lang: document.documentElement.lang,
     heading: document.querySelector("h1")?.textContent?.trim(),

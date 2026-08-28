@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "./assets/brand/logo-babuska.png";
+import logo from "./assets/brand/logo-babuska.webp";
 import {
   ADMIN_TABS,
   adminText,
@@ -14,10 +14,12 @@ import type {
   SiteSettings,
 } from "./lib/content";
 import {
+  removableMediaPaths,
   removeUploadedImage,
   uploadImage,
   type MediaFolder,
 } from "./lib/media";
+import { mediaVariantPaths, parseMediaVariants } from "./lib/media-variants";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 type SessionState = "loading" | "signed-out" | "denied" | "ready";
@@ -32,6 +34,7 @@ const emptyItem: AdminMenuItem = {
   price: "",
   image: "",
   storagePath: "",
+  imageVariants: {},
   descriptionSr: "",
   descriptionEn: "",
   factSr: "",
@@ -47,6 +50,7 @@ const emptyGallery: AdminGalleryItem = {
   id: "",
   image: "",
   storagePath: "",
+  imageVariants: {},
   altSr: "",
   altEn: "",
   sortOrder: 0,
@@ -61,6 +65,7 @@ const emptySettings: SiteSettings = {
   socialHandle: "",
   heroImage: "",
   heroImageStoragePath: "",
+  heroImageVariants: {},
   heroTitleSr: "",
   heroTitleEn: "",
   heroDescriptionSr: "",
@@ -207,7 +212,9 @@ function MediaUpload({
   );
 }
 
-const settingFields: [keyof SiteSettings, string][] = [
+type TextSettingKey = Exclude<keyof SiteSettings, "heroImageVariants">;
+
+const settingFields: [TextSettingKey, string][] = [
   ["instagram", "instagram"],
   ["facebook", "facebook"],
   ["tiktok", "tiktok"],
@@ -249,12 +256,14 @@ function settingsFromRow(row: Record<string, unknown> | null): SiteSettings {
   for (const [key, column] of settingFields)
     output[key] =
       typeof row?.[column] === "string" ? (row[column] as string) : "";
+  output.heroImageVariants = parseMediaVariants(row?.hero_image_variants);
   return output;
 }
 
 function settingsPayload(settings: SiteSettings) {
   return Object.fromEntries([
     ["id", 1],
+    ["hero_image_variants", settings.heroImageVariants],
     ...settingFields.map(([key, column]) => [
       column,
       settings[key].trim() || null,
@@ -321,15 +330,26 @@ export default function Admin() {
       new Set(
         [
           ...items.map((item) => item.storagePath),
+          ...items.flatMap((item) => mediaVariantPaths(item.imageVariants)),
           ...galleryItems.map((item) => item.storagePath),
+          ...galleryItems.flatMap((item) =>
+            mediaVariantPaths(item.imageVariants),
+          ),
           savedHeroPath,
+          ...mediaVariantPaths(settings.heroImageVariants),
         ].filter(Boolean),
       ),
-    [items, galleryItems, savedHeroPath],
+    [items, galleryItems, savedHeroPath, settings.heroImageVariants],
   );
-  const discardPending = async (path: string) => {
-    if (path && !persistedPaths.has(path))
-      await removeUploadedImage(path).catch(() => undefined);
+  const discardPending = async (
+    path: string,
+    variants: AdminMenuItem["imageVariants"] = {},
+  ) => {
+    const pending = removableMediaPaths(path, variants).filter(
+      (candidate) => !persistedPaths.has(candidate),
+    );
+    if (pending.length)
+      await removeUploadedImage(pending).catch(() => undefined);
   };
 
   const load = async () => {
@@ -342,13 +362,13 @@ export default function Admin() {
         supabase
           .from("menu_items")
           .select(
-            "id, name_sr, name_en, category_id, price, image_url, storage_path, description_sr, description_en, fact_sr, fact_en",
+            "id, name_sr, name_en, category_id, price, image_url, storage_path, image_variants, description_sr, description_en, fact_sr, fact_en",
           )
           .order("sort_order"),
         supabase
           .from("gallery_items")
           .select(
-            "id, image_url, storage_path, alt_sr, alt_en, is_published, sort_order",
+            "id, image_url, storage_path, image_variants, alt_sr, alt_en, is_published, sort_order",
           )
           .order("sort_order"),
         supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
@@ -378,6 +398,7 @@ export default function Admin() {
         price: item.price,
         image: item.image_url ?? "",
         storagePath: item.storage_path ?? "",
+        imageVariants: parseMediaVariants(item.image_variants),
         descriptionSr: item.description_sr ?? "",
         descriptionEn: item.description_en ?? "",
         factSr: item.fact_sr ?? "",
@@ -389,6 +410,7 @@ export default function Admin() {
         id: item.id,
         image: item.image_url,
         storagePath: item.storage_path ?? "",
+        imageVariants: parseMediaVariants(item.image_variants),
         altSr: item.alt_sr,
         altEn: item.alt_en,
         isPublished: item.is_published,
@@ -465,26 +487,35 @@ export default function Admin() {
         : folder === "menu"
           ? draft.storagePath
           : galleryDraft.storagePath;
+    const currentVariants =
+      folder === "hero"
+        ? settings.heroImageVariants
+        : folder === "menu"
+          ? draft.imageVariants
+          : galleryDraft.imageVariants;
     try {
       const media = await uploadImage(file, folder);
-      await discardPending(currentPath);
+      await discardPending(currentPath, currentVariants);
       if (folder === "hero")
         setSettings((current) => ({
           ...current,
           heroImage: media.url,
           heroImageStoragePath: media.path,
+          heroImageVariants: media.variants,
         }));
       else if (folder === "menu")
         setDraft((current) => ({
           ...current,
           image: media.url,
           storagePath: media.path,
+          imageVariants: media.variants,
         }));
       else
         setGalleryDraft((current) => ({
           ...current,
           image: media.url,
           storagePath: media.path,
+          imageVariants: media.variants,
         }));
     } catch (error) {
       notice(
@@ -585,6 +616,7 @@ export default function Admin() {
       price: draft.price.trim(),
       image_url: draft.image,
       storage_path: draft.storagePath || null,
+      image_variants: draft.imageVariants,
       description: draft.descriptionSr.trim(),
       description_sr: draft.descriptionSr.trim(),
       description_en: draft.descriptionEn.trim(),
@@ -601,8 +633,14 @@ export default function Admin() {
       notice(result.error.message, "error");
       return;
     }
+    const oldItem = editingItem
+      ? items.find((item) => item.id === draft.id)
+      : undefined;
     if (oldPath && oldPath !== draft.storagePath)
-      await removeUploadedImage(oldPath).catch(() =>
+      await removeUploadedImage([
+        oldPath,
+        ...mediaVariantPaths(oldItem?.imageVariants ?? {}),
+      ]).catch(() =>
         notice(
           tr(
             "Пиће је сачувано, али стара слика није уклоњена.",
@@ -618,7 +656,7 @@ export default function Admin() {
   };
 
   const cancelItem = async () => {
-    await discardPending(draft.storagePath);
+    await discardPending(draft.storagePath, draft.imageVariants);
     setDraft({ ...emptyItem, categoryId: categories[0]?.id ?? "" });
     setEditingItem(false);
   };
@@ -633,7 +671,10 @@ export default function Admin() {
       notice(error.message, "error");
       return;
     }
-    await removeUploadedImage(item.storagePath).catch(() =>
+    await removeUploadedImage([
+      item.storagePath,
+      ...mediaVariantPaths(item.imageVariants),
+    ]).catch(() =>
       notice(
         tr(
           "Пиће је избрисано, али слика није уклоњена.",
@@ -669,6 +710,7 @@ export default function Admin() {
     const payload = {
       image_url: galleryDraft.image,
       storage_path: galleryDraft.storagePath || null,
+      image_variants: galleryDraft.imageVariants,
       alt_sr: galleryDraft.altSr.trim(),
       alt_en: galleryDraft.altEn.trim(),
       is_published: galleryDraft.isPublished,
@@ -684,8 +726,14 @@ export default function Admin() {
       notice(result.error.message, "error");
       return;
     }
+    const oldGalleryItem = editingGallery
+      ? galleryItems.find((item) => item.id === galleryDraft.id)
+      : undefined;
     if (oldPath && oldPath !== galleryDraft.storagePath)
-      await removeUploadedImage(oldPath).catch(() =>
+      await removeUploadedImage([
+        oldPath,
+        ...mediaVariantPaths(oldGalleryItem?.imageVariants ?? {}),
+      ]).catch(() =>
         notice(
           tr(
             "Галерија је сачувана, али стара слика није уклоњена.",
@@ -704,7 +752,7 @@ export default function Admin() {
   };
 
   const cancelGallery = async () => {
-    await discardPending(galleryDraft.storagePath);
+    await discardPending(galleryDraft.storagePath, galleryDraft.imageVariants);
     setGalleryDraft(emptyGallery);
     setEditingGallery(false);
   };
@@ -723,7 +771,10 @@ export default function Admin() {
       notice(error.message, "error");
       return;
     }
-    await removeUploadedImage(item.storagePath).catch(() =>
+    await removeUploadedImage([
+      item.storagePath,
+      ...mediaVariantPaths(item.imageVariants),
+    ]).catch(() =>
       notice(
         tr(
           "Запис је избрисан, али слика није уклоњена.",
@@ -792,7 +843,13 @@ export default function Admin() {
   const localizedSetting = (field: string) =>
     settings[`${field}${suffix}` as keyof SiteSettings] as string;
   const localizedItemKey = (field: "name" | "description" | "fact") =>
-    `${field}${suffix}` as keyof AdminMenuItem;
+    `${field}${suffix}` as
+      | "nameSr"
+      | "nameEn"
+      | "descriptionSr"
+      | "descriptionEn"
+      | "factSr"
+      | "factEn";
   const localizedCategoryKey = `name${suffix}` as "nameSr" | "nameEn";
   const localizedGalleryKey = contentLanguage === "sr" ? "altSr" : "altEn";
 

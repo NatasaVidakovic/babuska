@@ -22,7 +22,7 @@ const png = Buffer.from(
   "base64",
 );
 const settingColumns =
-  "id, instagram, facebook, tiktok, phone, email, social_handle, hero_image_url, hero_image_storage_path, hero_title_sr, hero_title_en, hero_description_sr, hero_description_en, hero_cta_sr, hero_cta_en, footer_address_heading_sr, footer_address_heading_en, footer_address_line_1_sr, footer_address_line_1_en, footer_address_line_2_sr, footer_address_line_2_en, footer_address_line_3_sr, footer_address_line_3_en, footer_hours_heading_sr, footer_hours_heading_en, footer_hours_line_1_sr, footer_hours_line_1_en, footer_hours_line_2_sr, footer_hours_line_2_en, footer_hours_line_3_sr, footer_hours_line_3_en, footer_contact_heading_sr, footer_contact_heading_en, footer_copyright_sr, footer_copyright_en";
+  "id, instagram, facebook, tiktok, phone, email, social_handle, hero_image_url, hero_image_storage_path, hero_image_variants, hero_title_sr, hero_title_en, hero_description_sr, hero_description_en, hero_cta_sr, hero_cta_en, footer_address_heading_sr, footer_address_heading_en, footer_address_line_1_sr, footer_address_line_1_en, footer_address_line_2_sr, footer_address_line_2_en, footer_address_line_3_sr, footer_address_line_3_en, footer_hours_heading_sr, footer_hours_heading_en, footer_hours_line_1_sr, footer_hours_line_1_en, footer_hours_line_2_sr, footer_hours_line_2_en, footer_hours_line_3_sr, footer_hours_line_3_en, footer_contact_heading_sr, footer_contact_heading_en, footer_copyright_sr, footer_copyright_en";
 
 const { error: signInError } = await admin.auth.signInWithPassword({
   email,
@@ -58,6 +58,9 @@ if (categoryError || !category)
 const heroPath = `hero/smoke-${Date.now()}.png`;
 const menuPath = `menu/smoke-${Date.now()}.png`;
 const galleryPath = `gallery/smoke-${Date.now()}.png`;
+const heroVariantPath = heroPath.replace(".png", "-640.webp");
+const menuVariantPath = menuPath.replace(".png", "-480.webp");
+const galleryVariantPath = galleryPath.replace(".png", "-640.webp");
 let menuItemId = "";
 let galleryItemId = "";
 
@@ -73,7 +76,14 @@ try {
   if (!anonymousWriteError)
     throw new Error("Anonymous gallery write was accepted.");
 
-  for (const path of [heroPath, menuPath, galleryPath]) {
+  for (const path of [
+    heroPath,
+    menuPath,
+    galleryPath,
+    heroVariantPath,
+    menuVariantPath,
+    galleryVariantPath,
+  ]) {
     const { error } = await admin.storage
       .from("cafe-media")
       .upload(path, png, { contentType: "image/png", upsert: false });
@@ -85,11 +95,19 @@ try {
     .data.publicUrl;
   const galleryUrl = admin.storage.from("cafe-media").getPublicUrl(galleryPath)
     .data.publicUrl;
+  const variants = (path, width) => ({
+    [String(width)]: {
+      path,
+      width,
+      url: admin.storage.from("cafe-media").getPublicUrl(path).data.publicUrl,
+    },
+  });
 
   const settingsPayload = {
     id: 1,
     hero_image_url: heroUrl,
     hero_image_storage_path: heroPath,
+    hero_image_variants: variants(heroVariantPath, 640),
     hero_title_sr: "Провјера почетне странице",
     hero_title_en: `${marker} EN`,
     hero_description_sr: "Опис на српском за провјеру.",
@@ -136,6 +154,7 @@ try {
       price: "9.90 КМ",
       image_url: menuUrl,
       storage_path: menuPath,
+      image_variants: variants(menuVariantPath, 480),
       description: "Привремена слика производа.",
       description_sr: "Привремена слика производа.",
       description_en: "Temporary product image.",
@@ -158,6 +177,7 @@ try {
     .insert({
       image_url: galleryUrl,
       storage_path: galleryPath,
+      image_variants: variants(galleryVariantPath, 640),
       alt_sr: "Привремена галеријска слика",
       alt_en: `${marker} EN`,
       is_published: true,
@@ -179,24 +199,25 @@ try {
     anonymous
       .from("site_settings")
       .select(
-        "hero_image_storage_path, hero_title_sr, hero_title_en, footer_hours_heading_sr",
+        "hero_image_storage_path, hero_image_variants, hero_title_sr, hero_title_en, footer_hours_heading_sr",
       )
       .eq("id", 1)
       .single(),
     anonymous
       .from("menu_items")
-      .select("storage_path, name_sr, name_en")
+      .select("storage_path, image_variants, name_sr, name_en")
       .eq("id", menuItemId)
       .single(),
     anonymous
       .from("gallery_items")
-      .select("storage_path, alt_sr, alt_en")
+      .select("storage_path, image_variants, alt_sr, alt_en")
       .eq("id", galleryItemId)
       .single(),
   ]);
   if (
     publicSettingsError ||
     publicSettings.hero_image_storage_path !== heroPath ||
+    !publicSettings.hero_image_variants?.["640"] ||
     publicSettings.hero_title_sr !== "Провјера почетне странице"
   )
     throw new Error(
@@ -205,6 +226,7 @@ try {
   if (
     publicMenuError ||
     publicMenu.storage_path !== menuPath ||
+    !publicMenu.image_variants?.["480"] ||
     publicMenu.name_sr !== "Привремено пиће"
   )
     throw new Error(
@@ -213,6 +235,7 @@ try {
   if (
     publicGalleryError ||
     publicGallery.storage_path !== galleryPath ||
+    !publicGallery.image_variants?.["640"] ||
     publicGallery.alt_sr !== "Привремена галеријска слика"
   )
     throw new Error(
@@ -223,6 +246,9 @@ try {
     fetch(heroUrl),
     fetch(menuUrl),
     fetch(galleryUrl),
+    fetch(admin.storage.from("cafe-media").getPublicUrl(heroVariantPath).data.publicUrl),
+    fetch(admin.storage.from("cafe-media").getPublicUrl(menuVariantPath).data.publicUrl),
+    fetch(admin.storage.from("cafe-media").getPublicUrl(galleryVariantPath).data.publicUrl),
   ]);
   if (responses.some((response) => !response.ok))
     throw new Error(
@@ -238,5 +264,12 @@ try {
   await admin.from("site_settings").upsert(originalSettings);
   await admin.storage
     .from("cafe-media")
-    .remove([heroPath, menuPath, galleryPath]);
+    .remove([
+      heroPath,
+      menuPath,
+      galleryPath,
+      heroVariantPath,
+      menuVariantPath,
+      galleryVariantPath,
+    ]);
 }

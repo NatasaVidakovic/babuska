@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Routes, Route } from "react-router-dom";
-import brandLogo from "./assets/brand/logo-babuska.png";
-import heroWordmark from "./assets/brand/logo-wordmark.png";
+import brandLogo from "./assets/brand/logo-babuska.webp";
+import heroWordmark from "./assets/brand/logo-wordmark.webp";
+import HeroLoader from "./components/HeroLoader";
+import DeferredSection from "./components/DeferredSection";
 import {
   localizeCategories,
   localizeMenuItems,
@@ -13,7 +15,17 @@ import {
   type SiteSettings,
 } from "./lib/content";
 import { BOOK_ITEMS_PER_PAGE, createBookPageSlots } from "./lib/book";
-import { isSupabaseConfigured, supabase } from "./lib/supabase";
+import {
+  emptySiteSettings,
+  fetchPublicContent,
+  publicMediaUrl,
+  publicSupabaseConfig,
+  readPublicContentCache,
+  writePublicContentCache,
+  type PublicContentSnapshot,
+} from "./lib/public-content";
+import { getHeroLoadState } from "./lib/hero-loader";
+import { mediaSrcSet } from "./lib/media-variants";
 
 const Admin = React.lazy(() => import("./Admin"));
 
@@ -28,43 +40,6 @@ export type {
   MenuCategory,
   SiteSettings,
 } from "./lib/content";
-
-const emptySiteSettings: SiteSettings = {
-  instagram: "",
-  facebook: "",
-  tiktok: "",
-  phone: "",
-  email: "",
-  socialHandle: "",
-  heroImage: "",
-  heroImageStoragePath: "",
-  heroTitleSr: "",
-  heroTitleEn: "",
-  heroDescriptionSr: "",
-  heroDescriptionEn: "",
-  heroCtaSr: "",
-  heroCtaEn: "",
-  footerAddressHeadingSr: "",
-  footerAddressHeadingEn: "",
-  footerAddressLine1Sr: "",
-  footerAddressLine1En: "",
-  footerAddressLine2Sr: "",
-  footerAddressLine2En: "",
-  footerAddressLine3Sr: "",
-  footerAddressLine3En: "",
-  footerHoursHeadingSr: "",
-  footerHoursHeadingEn: "",
-  footerHoursLine1Sr: "",
-  footerHoursLine1En: "",
-  footerHoursLine2Sr: "",
-  footerHoursLine2En: "",
-  footerHoursLine3Sr: "",
-  footerHoursLine3En: "",
-  footerContactHeadingSr: "",
-  footerContactHeadingEn: "",
-  footerCopyrightSr: "",
-  footerCopyrightEn: "",
-};
 
 // ── Language ─────────────────────────────────────────────────────────
 const LangContext = React.createContext<Lang>("sr");
@@ -176,6 +151,7 @@ interface MenuItem {
   name: string;
   price: string;
   image: string;
+  imageSrcSet: string;
   ingredients: string;
   fact: string;
 }
@@ -394,9 +370,14 @@ function MenuCard({ item }: { item: MenuItem }) {
       >
         <img
           src={item.image}
+          srcSet={item.imageSrcSet || undefined}
+          sizes="96px"
           alt={item.name}
           className="w-full h-full object-cover"
           loading="lazy"
+          decoding="async"
+          width={96}
+          height={96}
         />
       </div>
 
@@ -1376,134 +1357,37 @@ function LandingPage() {
   }, [lang]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
     let mounted = true;
-    const loadPublicContent = async () => {
-      const [settingsResult, categoriesResult, itemsResult, galleryResult] =
-        await Promise.all([
-          supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
-          supabase
-            .from("menu_categories")
-            .select("id, name_sr, name_en, sort_order")
-            .eq("is_active", true)
-            .order("sort_order"),
-          supabase
-            .from("menu_items")
-            .select(
-              "id, name_sr, name_en, category_id, price, image_url, storage_path, description_sr, description_en, fact_sr, fact_en",
-            )
-            .eq("is_published", true)
-            .order("sort_order"),
-          supabase
-            .from("gallery_items")
-            .select(
-              "id, image_url, storage_path, alt_sr, alt_en, is_published, sort_order",
-            )
-            .eq("is_published", true)
-            .order("sort_order"),
-        ]);
-      if (!mounted) return;
-      if (settingsResult.data) {
-        setSocialLinks({
-          instagram: settingsResult.data.instagram ?? "",
-          facebook: settingsResult.data.facebook ?? "",
-          tiktok: settingsResult.data.tiktok ?? "",
-        });
-        setSiteSettings({
-          instagram: settingsResult.data.instagram ?? "",
-          facebook: settingsResult.data.facebook ?? "",
-          tiktok: settingsResult.data.tiktok ?? "",
-          phone: settingsResult.data.phone ?? "",
-          email: settingsResult.data.email ?? "",
-          socialHandle: settingsResult.data.social_handle ?? "",
-          heroImage: settingsResult.data.hero_image_url ?? "",
-          heroImageStoragePath:
-            settingsResult.data.hero_image_storage_path ?? "",
-          heroTitleSr: settingsResult.data.hero_title_sr ?? "",
-          heroTitleEn: settingsResult.data.hero_title_en ?? "",
-          heroDescriptionSr: settingsResult.data.hero_description_sr ?? "",
-          heroDescriptionEn: settingsResult.data.hero_description_en ?? "",
-          heroCtaSr: settingsResult.data.hero_cta_sr ?? "",
-          heroCtaEn: settingsResult.data.hero_cta_en ?? "",
-          footerAddressHeadingSr:
-            settingsResult.data.footer_address_heading_sr ?? "",
-          footerAddressHeadingEn:
-            settingsResult.data.footer_address_heading_en ?? "",
-          footerAddressLine1Sr:
-            settingsResult.data.footer_address_line_1_sr ?? "",
-          footerAddressLine1En:
-            settingsResult.data.footer_address_line_1_en ?? "",
-          footerAddressLine2Sr:
-            settingsResult.data.footer_address_line_2_sr ?? "",
-          footerAddressLine2En:
-            settingsResult.data.footer_address_line_2_en ?? "",
-          footerAddressLine3Sr:
-            settingsResult.data.footer_address_line_3_sr ?? "",
-          footerAddressLine3En:
-            settingsResult.data.footer_address_line_3_en ?? "",
-          footerHoursHeadingSr:
-            settingsResult.data.footer_hours_heading_sr ?? "",
-          footerHoursHeadingEn:
-            settingsResult.data.footer_hours_heading_en ?? "",
-          footerHoursLine1Sr: settingsResult.data.footer_hours_line_1_sr ?? "",
-          footerHoursLine1En: settingsResult.data.footer_hours_line_1_en ?? "",
-          footerHoursLine2Sr: settingsResult.data.footer_hours_line_2_sr ?? "",
-          footerHoursLine2En: settingsResult.data.footer_hours_line_2_en ?? "",
-          footerHoursLine3Sr: settingsResult.data.footer_hours_line_3_sr ?? "",
-          footerHoursLine3En: settingsResult.data.footer_hours_line_3_en ?? "",
-          footerContactHeadingSr:
-            settingsResult.data.footer_contact_heading_sr ?? "",
-          footerContactHeadingEn:
-            settingsResult.data.footer_contact_heading_en ?? "",
-          footerCopyrightSr: settingsResult.data.footer_copyright_sr ?? "",
-          footerCopyrightEn: settingsResult.data.footer_copyright_en ?? "",
-        });
-      }
-      if (categoriesResult.data) {
-        setMenuCategories(
-          categoriesResult.data.map((category) => ({
-            id: category.id,
-            nameSr: category.name_sr ?? "",
-            nameEn: category.name_en ?? "",
-            sortOrder: category.sort_order,
-          })),
-        );
-      }
-      if (itemsResult.data) {
-        setAdminItems(
-          itemsResult.data.map((item) => ({
-            id: item.id,
-            nameSr: item.name_sr ?? "",
-            nameEn: item.name_en ?? "",
-            categoryId: item.category_id,
-            price: item.price,
-            image: item.image_url ?? "",
-            storagePath: item.storage_path ?? "",
-            descriptionSr: item.description_sr ?? "",
-            descriptionEn: item.description_en ?? "",
-            factSr: item.fact_sr ?? "",
-            factEn: item.fact_en ?? "",
-          })),
-        );
-      }
-      if (galleryResult.data)
-        setAdminGalleryItems(
-          galleryResult.data.map((item) => ({
-            id: item.id,
-            image: item.image_url,
-            storagePath: item.storage_path ?? "",
-            altSr: item.alt_sr,
-            altEn: item.alt_en,
-            sortOrder: item.sort_order,
-            isPublished: item.is_published,
-          })),
-        );
+    const applySnapshot = (snapshot: PublicContentSnapshot) => {
+      setSiteSettings(snapshot.settings);
+      setSocialLinks({
+        instagram: snapshot.settings.instagram,
+        facebook: snapshot.settings.facebook,
+        tiktok: snapshot.settings.tiktok,
+      });
+      setMenuCategories(snapshot.categories);
+      setAdminItems(snapshot.items);
+      setAdminGalleryItems(snapshot.gallery);
     };
-    void loadPublicContent();
+
+    const cached = readPublicContentCache();
+    if (cached) applySnapshot(cached);
+    if (publicSupabaseConfig) {
+      void fetchPublicContent(publicSupabaseConfig)
+        .then((snapshot) => {
+          if (!mounted) return;
+          applySnapshot(snapshot);
+          writePublicContentCache(snapshot);
+        })
+        .catch(() => {
+          // Cached content or built-in copy remains visible when the backend is offline.
+        });
+    }
     return () => {
       mounted = false;
     };
   }, []);
+
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [lightboxImg, setLightboxImg] = useState<number | null>(null);
@@ -1536,6 +1420,7 @@ function LandingPage() {
       name: item.name,
       price: item.price,
       image: item.image,
+      imageSrcSet: mediaSrcSet(item.imageVariants),
       ingredients: item.description,
       fact: item.fact,
     }));
@@ -1553,7 +1438,7 @@ function LandingPage() {
       ),
     [localizedItems, localizedCategories],
   );
-  const bookMenuDrinks = isSupabaseConfigured ? dynamicBookDrinks : bookDrinks;
+  const bookMenuDrinks = publicSupabaseConfig ? dynamicBookDrinks : bookDrinks;
   const pageContent = {
     heroTitle:
       lang === "sr"
@@ -1611,17 +1496,81 @@ function LandingPage() {
     email: siteSettings.email || "hello@cafebabuska.ba",
     socialHandle: siteSettings.socialHandle || "@cafebabuska",
   };
-  const publicGallery = isSupabaseConfigured
+  const publicGallery: {
+    src: string;
+    alt: string;
+    srcSet?: string;
+  }[] = publicSupabaseConfig
     ? adminGalleryItems.flatMap((item) => {
         const alt = localizedText(item.altSr, item.altEn, lang);
-        return item.image && alt ? [{ src: item.image, alt }] : [];
+        return item.image && alt
+          ? [{ src: item.image, alt, srcSet: mediaSrcSet(item.imageVariants) }]
+          : [];
       })
     : galleryImages;
+  const stableHeroSources = [640, 1280, 1920]
+    .map((width) => ({
+      width,
+      url: publicMediaUrl(`hero/current-${width}.webp`),
+    }))
+    .filter((source) => source.url);
+  const configuredHeroSources = Object.values(
+    siteSettings.heroImageVariants,
+  ).sort((left, right) => left.width - right.width);
+  const initialHeroSources = publicSupabaseConfig
+    ? stableHeroSources
+    : configuredHeroSources;
+  const [preferLegacyHero, setPreferLegacyHero] = useState(false);
   const heroImage =
+    (preferLegacyHero ? siteSettings.heroImage : initialHeroSources.at(-1)?.url) ||
     siteSettings.heroImage ||
-    (!isSupabaseConfigured
+    (!publicSupabaseConfig
       ? "https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=1920&h=1080&fit=crop&auto=format"
       : "");
+  const heroSrcSet = preferLegacyHero
+    ? ""
+    : initialHeroSources
+        .map((source) => `${source.url} ${source.width}w`)
+        .join(", ");
+  const [heroLoad, setHeroLoad] = useState({
+    url: heroImage,
+    elapsedMs: 0,
+    decoded: false,
+    failed: !heroImage,
+  });
+  const heroLoadState = getHeroLoadState(heroLoad);
+
+  useEffect(() => {
+    setHeroLoad({
+      url: heroImage,
+      elapsedMs: 0,
+      decoded: false,
+      failed: !heroImage,
+    });
+    if (!heroImage) return;
+    const loaderTimer = window.setTimeout(
+      () =>
+        setHeroLoad((current) =>
+          current.url === heroImage
+            ? { ...current, elapsedMs: 400 }
+            : current,
+        ),
+      400,
+    );
+    const fallbackTimer = window.setTimeout(
+      () =>
+        setHeroLoad((current) =>
+          current.url === heroImage
+            ? { ...current, elapsedMs: 4_000 }
+            : current,
+        ),
+      4_000,
+    );
+    return () => {
+      window.clearTimeout(loaderTimer);
+      window.clearTimeout(fallbackTimer);
+    };
+  }, [heroImage]);
 
   useEffect(() => {
     if (lightboxImg !== null && lightboxImg >= publicGallery.length)
@@ -1796,16 +1745,51 @@ function LandingPage() {
         >
           <div className="absolute inset-0">
             {heroImage && (
-              <img
-                src={heroImage}
-                alt={lang === "sr" ? "Поглед на Москву" : "View of Moscow"}
-                className="w-full h-full object-cover"
-                style={{
-                  opacity: 0.43,
-                  objectPosition: "center center",
-                  filter: "sepia(10%) brightness(1.02) saturate(0.88)",
-                }}
-              />
+              <picture className="block h-full w-full">
+                {heroSrcSet && (
+                  <source
+                    type="image/webp"
+                    srcSet={heroSrcSet}
+                    sizes="100vw"
+                  />
+                )}
+                <img
+                  src={heroImage}
+                  srcSet={heroSrcSet || undefined}
+                  sizes={heroSrcSet ? "100vw" : undefined}
+                  alt={lang === "sr" ? "Поглед на Москву" : "View of Moscow"}
+                  className="site-hero__image h-full w-full object-cover"
+                  data-ready={heroLoadState === "ready"}
+                  fetchPriority="high"
+                  decoding="async"
+                  onLoad={(event) => {
+                    const image = event.currentTarget;
+                    void image
+                      .decode()
+                      .catch(() => undefined)
+                      .finally(() =>
+                        setHeroLoad((current) =>
+                          current.url === heroImage
+                            ? { ...current, decoded: true, failed: false }
+                            : current,
+                        ),
+                      );
+                  }}
+                  onError={() => {
+                    if (heroImage.includes("/hero/current-"))
+                      setPreferLegacyHero(true);
+                    setHeroLoad((current) =>
+                      current.url === heroImage
+                        ? { ...current, failed: true }
+                        : current,
+                    );
+                  }}
+                  style={{
+                    objectPosition: "center center",
+                    filter: "sepia(10%) brightness(1.02) saturate(0.88)",
+                  }}
+                />
+              </picture>
             )}
             <div
               className="absolute inset-0"
@@ -1825,8 +1809,18 @@ function LandingPage() {
           <div className="absolute bottom-16 left-5 md:left-9">
             <CornerOrnament rotate={270} />
           </div>
-          <div className="absolute bottom-16 right-5 md:right-9">
-            <CornerOrnament rotate={180} />
+          <div className="hero-loader-slot absolute bottom-16 right-5 md:right-9">
+            {heroLoadState === "loading" ? (
+              <HeroLoader
+                label={
+                  lang === "sr"
+                    ? "Учитавање почетне слике"
+                    : "Loading the hero image"
+                }
+              />
+            ) : (
+              <CornerOrnament rotate={180} />
+            )}
           </div>
 
           <div className="site-hero__content relative z-10 flex flex-col items-center text-center px-6 max-w-2xl mx-auto">
@@ -1952,7 +1946,9 @@ function LandingPage() {
             <div className="site-section-heading">
               <h2>{t.book_heading}</h2>
             </div>
-            <BookMenu drinks={bookMenuDrinks} />
+            <DeferredSection minHeight="650px">
+              <BookMenu drinks={bookMenuDrinks} />
+            </DeferredSection>
           </div>
         </section>
 
@@ -1965,30 +1961,38 @@ function LandingPage() {
             <div className="site-section-heading">
               <h2>{t.gallery_heading}</h2>
             </div>
-            <div
-              className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
-              style={{ gridAutoRows: "220px" }}
-            >
-              {publicGallery.map((img, i) => (
-                <div
-                  key={i}
-                  className="overflow-hidden group relative cursor-pointer"
-                  style={{ gridRow: i === 0 ? "span 2" : "span 1" }}
-                  onClick={() => setLightboxImg(i)}
-                >
-                  <img
-                    src={img.src}
-                    alt={img.alt}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
-                    style={{ filter: "sepia(8%) brightness(0.96)" }}
-                  />
+            <DeferredSection minHeight="680px">
+              <div
+                className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
+                style={{ gridAutoRows: "220px" }}
+              >
+                {publicGallery.map((img, i) => (
                   <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: "rgba(132,14,12,0.06)" }}
-                  />
-                </div>
-              ))}
-            </div>
+                    key={i}
+                    className="overflow-hidden group relative cursor-pointer"
+                    style={{ gridRow: i === 0 ? "span 2" : "span 1" }}
+                    onClick={() => setLightboxImg(i)}
+                  >
+                    <img
+                      src={img.src}
+                      srcSet={img.srcSet || undefined}
+                      sizes="(min-width: 768px) 33vw, 50vw"
+                      alt={img.alt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                      style={{ filter: "sepia(8%) brightness(0.96)" }}
+                      loading="lazy"
+                      decoding="async"
+                      width={640}
+                      height={440}
+                    />
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      style={{ background: "rgba(132,14,12,0.06)" }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </DeferredSection>
           </div>
         </section>
 

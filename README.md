@@ -16,7 +16,7 @@ Install dependencies and start the services:
 ```powershell
 npm install
 npx supabase start
-npx supabase migration up
+npx supabase migration up --local
 npm run dev
 ```
 
@@ -43,6 +43,14 @@ npm run migrate:media
 
 The migration skips rows already backed by Storage and removes a newly uploaded object if its database update fails.
 
+After applying the responsive-media migration, generate the WebP variants and stable hero preload objects once:
+
+```powershell
+npm run backfill:media-variants
+```
+
+The backfill is authenticated and idempotent. It keeps original uploads, writes immutable menu/gallery derivatives, and refreshes only the stable `hero/current-*.webp` objects.
+
 ## Validation
 
 ```powershell
@@ -50,7 +58,7 @@ npm run check
 npm run check:local
 ```
 
-`check` runs TypeScript, unit tests, and the production build. `check:local` additionally verifies RLS-protected category/menu/contact writes, bilingual hero/menu/gallery media, public Storage access, and responsive layout at 360×640, 390×844, 768×700, 1024×600, 1366×768, and 1440×900. The local frontend and Supabase services must be running and `.env.local` must contain the local admin credentials.
+`check` runs TypeScript, unit tests, and the production build. `check:local` additionally verifies the single public bootstrap RPC, RLS-protected category/menu/contact writes, responsive hero/menu/gallery media, loader timing and fallback behavior, public Storage access, performance budgets, and responsive layout at 360×640, 390×844, 768×700, 1024×600, 1366×768, and 1440×900. The local frontend and Supabase services must be running and `.env.local` must contain the local admin credentials.
 
 ## Supabase security model
 
