@@ -12,6 +12,7 @@ import {
   type MenuCategory,
   type SiteSettings,
 } from "./lib/content";
+import { BOOK_ITEMS_PER_PAGE, createBookPageSlots } from "./lib/book";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 const Admin = React.lazy(() => import("./Admin"));
@@ -437,9 +438,12 @@ function BookItem({ item }: { item: BookDrink }) {
   const catLabel = T[lang].book_cat[item.category] ?? item.category;
   return (
     <div
+      data-book-item
       style={{
-        marginBottom: "13px",
-        paddingBottom: "11px",
+        height: "100%",
+        minHeight: 0,
+        overflow: "hidden",
+        paddingBottom: "10px",
         borderBottom: "1px dotted rgba(139,94,60,0.18)",
       }}
     >
@@ -541,11 +545,21 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
     setMobileFlip(null);
   }, [drinks]);
 
-  const total = Math.max(1, Math.ceil(drinks.length / 10));
-  const getL = (s: number) => drinks.slice(s * 10, s * 10 + 5);
-  const getR = (s: number) => drinks.slice(s * 10 + 5, (s + 1) * 10);
-  const totalMobilePages = Math.max(1, Math.ceil(drinks.length / 5));
-  const getMobilePg = (p: number) => drinks.slice(p * 5, (p + 1) * 5);
+  const itemsPerSpread = BOOK_ITEMS_PER_PAGE * 2;
+  const total = Math.max(1, Math.ceil(drinks.length / itemsPerSpread));
+  const getL = (s: number) =>
+    drinks.slice(s * itemsPerSpread, s * itemsPerSpread + BOOK_ITEMS_PER_PAGE);
+  const getR = (s: number) =>
+    drinks.slice(
+      s * itemsPerSpread + BOOK_ITEMS_PER_PAGE,
+      (s + 1) * itemsPerSpread,
+    );
+  const totalMobilePages = Math.max(
+    1,
+    Math.ceil(drinks.length / BOOK_ITEMS_PER_PAGE),
+  );
+  const getMobilePg = (p: number) =>
+    drinks.slice(p * BOOK_ITEMS_PER_PAGE, (p + 1) * BOOK_ITEMS_PER_PAGE);
 
   const go = (dir: "next" | "prev") => {
     if (flip) return;
@@ -572,6 +586,7 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
   const PAGE_BG = "#FEFCF8";
   const BOOK_W = 800,
     BOOK_H = 480;
+  const MOBILE_BOOK_H = "clamp(470px, 125vw, 510px)";
 
   // Inline page renderer (function call, not component, to avoid remounting)
   const renderPage = (
@@ -581,8 +596,11 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
     extraStyle?: React.CSSProperties,
   ) => (
     <div
+      data-book-page
       style={{
         flex: 1,
+        height: "100%",
+        boxSizing: "border-box",
         padding: "26px 26px 18px",
         position: "relative",
         display: "flex",
@@ -629,10 +647,21 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
         >
           {pageNum}
         </p>
-        <div style={{ flex: 1 }}>
-          {items.map((item) => (
-            <BookItem key={item.name} item={item} />
-          ))}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "grid",
+            gridTemplateRows: `repeat(${BOOK_ITEMS_PER_PAGE}, minmax(0, 1fr))`,
+          }}
+        >
+          {createBookPageSlots(items).map((item, index) =>
+            item ? (
+              <BookItem key={`${pageNum}-${index}-${item.name}`} item={item} />
+            ) : (
+              <div key={`${pageNum}-empty-${index}`} aria-hidden="true" />
+            ),
+          )}
         </div>
       </div>
     </div>
@@ -698,9 +727,12 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
 
   const renderMobilePage = (page: number, extraStyle?: React.CSSProperties) => (
     <div
+      data-book-page
       style={{
         padding: "30px 26px 22px",
-        minHeight: "460px",
+        height: MOBILE_BOOK_H,
+        boxSizing: "border-box",
+        overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -733,48 +765,76 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
         >
           {t.book_running_head}
         </p>
-        <div style={{ flex: 1 }}>
-          {getMobilePg(page).map((item) => (
-            <div key={item.name} style={{ marginBottom: "22px" }}>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "grid",
+            gridTemplateRows: `repeat(${BOOK_ITEMS_PER_PAGE}, minmax(0, 1fr))`,
+          }}
+        >
+          {createBookPageSlots(getMobilePg(page)).map((item, index) =>
+            item ? (
               <div
+                key={`${page}-${index}-${item.name}`}
+                data-book-item
                 style={{
+                  minHeight: 0,
+                  overflow: "hidden",
                   display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
+                  flexDirection: "column",
+                  justifyContent: "center",
                 }}
               >
-                <span
+                <div
                   style={{
-                    fontFamily: "Philosopher, serif",
-                    fontSize: "17px",
-                    color: "#1A0D08",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: "10px",
                   }}
                 >
-                  {item.name}
-                </span>
-                <span
+                  <span
+                    style={{
+                      fontFamily: "Philosopher, serif",
+                      fontSize: "17px",
+                      color: "#1A0D08",
+                      lineHeight: 1.2,
+                      display: "-webkit-box",
+                      WebkitBoxOrient: "vertical",
+                      WebkitLineClamp: 2,
+                      overflow: "hidden",
+                    }}
+                  >
+                    {item.name}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "Lora, serif",
+                      fontSize: "15px",
+                      color: "#8C1513",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {item.price}
+                  </span>
+                </div>
+                <p
                   style={{
                     fontFamily: "Lora, serif",
-                    fontSize: "15px",
-                    color: "#8C1513",
+                    fontSize: "11px",
+                    color: "#75665E",
+                    fontStyle: "italic",
+                    margin: "3px 0 0",
                   }}
                 >
-                  {item.price}
-                </span>
+                  {t.book_cat[item.category] ?? item.category}
+                </p>
               </div>
-              <p
-                style={{
-                  fontFamily: "Lora, serif",
-                  fontSize: "11px",
-                  color: "#75665E",
-                  fontStyle: "italic",
-                  margin: "3px 0 0",
-                }}
-              >
-                {t.book_cat[item.category] ?? item.category}
-              </p>
-            </div>
-          ))}
+            ) : (
+              <div key={`${page}-empty-${index}`} aria-hidden="true" />
+            ),
+          )}
         </div>
         <div style={{ textAlign: "center", paddingTop: "12px" }}>
           <p
@@ -818,6 +878,7 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
         style={{ width: "100%" }}
       >
         <div
+          data-book-frame
           style={{
             position: "relative",
             boxShadow:
@@ -1028,7 +1089,10 @@ function BookMenu({ drinks }: { drinks: BookDrink[] }) {
   return (
     <div data-testid="dynamic-book-menu">
       <div ref={wrapperRef} style={{ width: "100%" }}>
-        <div style={{ height: BOOK_H * scale, position: "relative" }}>
+        <div
+          data-book-frame
+          style={{ height: BOOK_H * scale, position: "relative" }}
+        >
           <div
             style={{
               position: "absolute",

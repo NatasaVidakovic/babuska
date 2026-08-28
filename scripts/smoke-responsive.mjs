@@ -107,6 +107,25 @@ try {
       throw new Error(
         `${viewport.width}x${viewport.height}: Serbian Cyrillic is not the document default`,
       );
+
+    const bookFrame = page.locator("[data-book-frame]");
+    const bookHeightBefore = (await bookFrame.boundingBox())?.height ?? 0;
+    const nextBookButton = page
+      .locator('[data-testid="dynamic-book-menu"] button:not([disabled])')
+      .last();
+    if ((await nextBookButton.count()) > 0) {
+      await nextBookButton.click();
+      await page.waitForTimeout(1_000);
+    }
+    const bookHeightAfter = (await bookFrame.boundingBox())?.height ?? 0;
+    if (
+      bookHeightBefore <= 0 ||
+      Math.abs(bookHeightBefore - bookHeightAfter) > 1
+    )
+      throw new Error(
+        `${viewport.width}x${viewport.height}: menu book height changed after turning a page (${bookHeightBefore}px -> ${bookHeightAfter}px)`,
+      );
+
     await page.screenshot({
       path: resolve(
         evidenceDir,
