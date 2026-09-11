@@ -148,13 +148,105 @@ type Category =
   | "Hot Chocolate";
 
 interface MenuItem {
-  category: Exclude<Category, "All">;
+  category: string;
   name: string;
   price: string;
   image: string;
   imageSrcSet: string;
   ingredients: string;
   fact: string;
+}
+
+type CategoryIconKind =
+  | "coffee"
+  | "tea"
+  | "wine"
+  | "cocktail"
+  | "juice"
+  | "spirits";
+
+function categoryIconKind(category: string): CategoryIconKind {
+  const name = category.toLocaleLowerCase();
+  if (/(коктел|cocktail)/.test(name)) return "cocktail";
+  if (/(сок|juice|вода|water|хладн|cold)/.test(name)) return "juice";
+  if (/(чај|tea|инфуз|infusion)/.test(name)) return "tea";
+  if (
+    /(ракиј|schnapps|ликер|liqueur|виски|whiskey|bourbon|водка|vodka|текила|tequila|џин|gin|рум|rum|жесток|spirit)/.test(
+      name,
+    )
+  )
+    return "spirits";
+  if (
+    /(вино|wine|пиво|beer|цидер|cider)/.test(
+      name,
+    )
+  )
+    return "wine";
+  return "coffee";
+}
+
+function CategoryFallbackIcon({ category }: { category: string }) {
+  const kind = categoryIconKind(category);
+  const common = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+
+  return (
+    <svg
+      className="menu-card__category-icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      {...common}
+    >
+      {kind === "coffee" && (
+        <>
+          <path d="M5 8h10v7.1A3.9 3.9 0 0 1 11.1 19H8.9A3.9 3.9 0 0 1 5 15.1Z" />
+          <path d="M15 10h1.2a2.8 2.8 0 1 1 0 5.6H15" />
+          <path d="M7.5 5.4c-.7.7-.7 1.5 0 2.2M11 5.4c-.7.7-.7 1.5 0 2.2" />
+        </>
+      )}
+      {kind === "tea" && (
+        <>
+          <path d="M5.2 11.2h10.6v3.5A4.3 4.3 0 0 1 11.5 19h-2A4.3 4.3 0 0 1 5.2 14.7Z" />
+          <path d="M15.8 12.1h1a2.5 2.5 0 0 1 0 5h-1" />
+          <path d="M8 9.2h5.2M10.6 6.2v3" />
+          <path d="M6.7 8.2 9 6.1" />
+        </>
+      )}
+      {kind === "wine" && (
+        <>
+          <path d="M7 4.6h10c0 4-1.8 6.5-5 6.5s-5-2.5-5-6.5Z" />
+          <path d="M12 11.1v6.2M8.7 19h6.6" />
+          <path d="M8.5 7.7c1.2.6 5.8.6 7 0" />
+        </>
+      )}
+      {kind === "cocktail" && (
+        <>
+          <path d="M5.4 5.2h13.2L12 12.5 5.4 5.2Z" />
+          <path d="M12 12.5v5.1M8.7 19h6.6" />
+          <path d="M16.2 4.1 20 7.9M17.8 5.7l1.7-1.7M18.1 7.6l2.2.1" />
+        </>
+      )}
+      {kind === "juice" && (
+        <>
+          <path d="M7.1 6.7h9.8l-1.1 11.5H8.2L7.1 6.7Z" />
+          <path d="m14.6 3.8 1.5 2.9M16.1 3.7h2.1" />
+          <path d="m9 11.1 2.7 2.7-2.1 2.1M12.9 9.6l2.2 2.2-2.1 2.1" />
+        </>
+      )}
+      {kind === "spirits" && (
+        <>
+          <path d="M6.7 8.1h10.6l-.9 9.4a1.6 1.6 0 0 1-1.6 1.5H9.2a1.6 1.6 0 0 1-1.6-1.5l-.9-9.4Z" />
+          <path d="M8.3 8.1 9.2 5h5.6l.9 3.1" />
+          <path d="m9.1 11.3 3 3-2.5 2.5M13.1 10.7l2.1 2.1-2.5 2.5" />
+        </>
+      )}
+    </svg>
+  );
 }
 
 // ── Book menu data — 50 unique drinks, 10 per spread ─────────────────
@@ -362,8 +454,6 @@ function BookPageCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 
 // ── Menu card — horizontal list view ────
 function MenuCard({ item }: { item: MenuItem }) {
-  const fallbackInitial = item.name.trim().charAt(0).toLocaleUpperCase();
-
   return (
     <div
       className="flex flex-row items-center gap-4 py-4 md:py-5 w-full"
@@ -394,7 +484,7 @@ function MenuCard({ item }: { item: MenuItem }) {
           className="menu-card__fallback w-20 h-20 md:w-24 md:h-24 rounded-full shrink-0 flex items-center justify-center"
           aria-hidden="true"
         >
-          {fallbackInitial}
+          <CategoryFallbackIcon category={item.category} />
         </div>
       )}
 
@@ -1492,7 +1582,9 @@ function LandingPage() {
   const visibleItems: MenuItem[] = localizedItems
     .filter((item) => item.categoryId === activeCategory)
     .map((item) => ({
-      category: "Espresso",
+      category:
+        localizedCategories.find((category) => category.id === item.categoryId)
+          ?.name ?? "",
       name: item.name,
       price: item.price,
       image: item.image,
