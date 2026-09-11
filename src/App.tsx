@@ -163,21 +163,29 @@ type CategoryIconKind =
   | "wine"
   | "cocktail"
   | "juice"
+  | "water"
+  | "beer"
+  | "cider"
+  | "rakija"
   | "spirits";
 
 function categoryIconKind(category: string): CategoryIconKind {
   const name = category.toLocaleLowerCase();
   if (/(коктел|cocktail)/.test(name)) return "cocktail";
-  if (/(сок|juice|вода|water|хладн|cold)/.test(name)) return "juice";
+  if (/(вода|water)/.test(name)) return "water";
+  if (/(сок|juice|хладн|cold)/.test(name)) return "juice";
+  if (/(цидер|cider)/.test(name)) return "cider";
+  if (/(пиво|beer)/.test(name)) return "beer";
   if (/(чај|tea|инфуз|infusion)/.test(name)) return "tea";
+  if (/(ракиј|schnapps)/.test(name)) return "rakija";
   if (
-    /(ракиј|schnapps|ликер|liqueur|виски|whiskey|bourbon|водка|vodka|текила|tequila|џин|gin|рум|rum|жесток|spirit)/.test(
+    /(ликер|liqueur|виски|whiskey|bourbon|водка|vodka|текила|tequila|џин|gin|рум|rum|жесток|spirit)/.test(
       name,
     )
   )
     return "spirits";
   if (
-    /(вино|wine|пиво|beer|цидер|cider)/.test(
+    /(вино|wine)/.test(
       name,
     )
   )
@@ -236,6 +244,36 @@ function CategoryFallbackIcon({ category }: { category: string }) {
           <path d="M7.1 6.7h9.8l-1.1 11.5H8.2L7.1 6.7Z" />
           <path d="m14.6 3.8 1.5 2.9M16.1 3.7h2.1" />
           <path d="m9 11.1 2.7 2.7-2.1 2.1M12.9 9.6l2.2 2.2-2.1 2.1" />
+        </>
+      )}
+      {kind === "water" && (
+        <>
+          <path d="M7.1 5.4h9.8l-1.1 13.1H8.2L7.1 5.4Z" />
+          <path d="M8.7 13.1c1.9-.8 4.7-.8 6.6 0" />
+          <path d="M12 9.1c1.1 1.3 1.6 2.2 1.6 2.9a1.6 1.6 0 0 1-3.2 0c0-.7.5-1.6 1.6-2.9Z" />
+        </>
+      )}
+      {kind === "beer" && (
+        <>
+          <path d="M6.2 7.2h9.1v8.7a3.1 3.1 0 0 1-3.1 3.1H9.3a3.1 3.1 0 0 1-3.1-3.1V7.2Z" />
+          <path d="M15.3 9.2h1.3a2.5 2.5 0 0 1 0 5h-1.3" />
+          <path d="M6.2 7.2c.6-1.6 2-1.8 3-1.1.7-1 2.1-1 2.8 0 1-.7 2.6-.4 3.3 1.1" />
+        </>
+      )}
+      {kind === "cider" && (
+        <>
+          <path d="M7.5 6h9c0 3.4-1.6 5.7-4.5 5.7S7.5 9.4 7.5 6Z" />
+          <path d="M12 11.7v5.6M8.8 19h6.4" />
+          <path d="M9.1 8.6c1.4.6 4.4.6 5.8 0" />
+          <path d="m16.6 4 3.4 3.4M18 5.4l1.5-1.5M18.4 7.3l1.9.1" />
+        </>
+      )}
+      {kind === "rakija" && (
+        <>
+          <path d="M5.6 5.1h3v2.2l1.2 1.4v8.7H4.4V8.7l1.2-1.4V5.1Z" />
+          <path d="M4.4 11h5.4M5.8 14.2h2.6" />
+          <path d="M14 11.2h4.8l-.5 6.1h-3.8l-.5-6.1Z" />
+          <path d="M14.5 13.9h3.8" />
         </>
       )}
       {kind === "spirits" && (
