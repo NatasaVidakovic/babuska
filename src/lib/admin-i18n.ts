@@ -37,12 +37,12 @@ export const ADMIN_TABS = {
     sr: [
       "Пића",
       "Пића у менију",
-      "Додајте пиће у категорију и пренесите слику са рачунара.",
+      "Додајте пиће у категорију; слика и опис су необавезни.",
     ],
     en: [
       "Drinks",
       "Menu drinks",
-      "Add a drink to a category and upload its image from your computer.",
+      "Add a drink to a category; its image and description are optional.",
     ],
   },
   gallery: {

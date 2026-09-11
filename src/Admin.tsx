@@ -605,14 +605,12 @@ export default function Admin() {
       !draft.categoryId ||
       !draft.nameSr.trim() ||
       !draft.nameEn.trim() ||
-      !draft.descriptionSr.trim() ||
-      !draft.descriptionEn.trim() ||
-      !draft.image
+      !draft.price.trim()
     ) {
       notice(
         tr(
-          "Одаберите категорију, пренесите слику и попуните обавезни текст на оба језика.",
-          "Choose a category, upload an image, and complete required text in both languages.",
+          "Одаберите категорију и унесите назив и цијену пића.",
+          "Choose a category and enter the drink name and price.",
         ),
         "error",
       );
@@ -1392,8 +1390,8 @@ export default function Admin() {
                   <p>
                     {categories.length
                       ? tr(
-                          "Слика и текст на оба језика су обавезни.",
-                          "Image and text in both languages are required.",
+                          "Назив пића на оба језика и цијена су обавезни. Слика и опис нису обавезни.",
+                          "The drink name in both languages and price are required. An image and description are optional.",
                         )
                       : tr(
                           "Прво креирајте категорију.",
@@ -1407,10 +1405,10 @@ export default function Admin() {
                   language={uiLanguage}
                   completed={{
                     sr: Boolean(
-                      draft.nameSr.trim() && draft.descriptionSr.trim(),
+                      draft.nameSr.trim(),
                     ),
                     en: Boolean(
-                      draft.nameEn.trim() && draft.descriptionEn.trim(),
+                      draft.nameEn.trim(),
                     ),
                   }}
                 />
@@ -1462,9 +1460,13 @@ export default function Admin() {
                     }
                   />
                 </Field>
-                <Field label={tr("Слика", "Image")} full>
+                <Field
+                  label={tr("Слика", "Image")}
+                  hint={tr("Необавезно", "Optional")}
+                  full
+                >
                   <MediaUpload
-                    label={tr("Слика производа", "Product image")}
+                    label={tr("Слика пића", "Drink image")}
                     value={draft.image}
                     busy={uploading === "menu"}
                     language={uiLanguage}
@@ -1473,11 +1475,11 @@ export default function Admin() {
                 </Field>
                 <Field
                   label={tr("Опис / састојци", "Description / ingredients")}
+                  hint={tr("Необавезно", "Optional")}
                   full
                 >
                   <textarea
                     className="admin-input admin-textarea"
-                    required
                     value={draft[localizedItemKey("description")]}
                     onChange={(event) =>
                       setDraft({

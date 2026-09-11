@@ -23,7 +23,7 @@ describe("localized content", () => {
     expect(localizeCategory({ ...category, nameSr: "Kafa" }, "sr")).toBeNull();
   });
 
-  it("omits a menu item when required content is incomplete", () => {
+  it("keeps a menu item visible when its optional description and image are empty", () => {
     const item = {
       id: "1",
       categoryId: "c1",
@@ -38,7 +38,11 @@ describe("localized content", () => {
       factSr: "",
       factEn: "",
     };
-    expect(localizeMenuItem(item, "sr")).toBeNull();
+    expect(localizeMenuItem(item, "sr")).toMatchObject({
+      name: "Еспресо",
+      description: "",
+      image: "",
+    });
     expect(localizeMenuItem(item, "en")?.name).toBe("Espresso");
   });
 

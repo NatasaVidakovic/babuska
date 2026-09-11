@@ -131,9 +131,10 @@ export function localizeMenuItem(
     item.descriptionSr,
     item.descriptionEn,
     lang,
+    true,
   );
   const fact = localizedText(item.factSr, item.factEn, lang, true);
-  if (!name || !description || fact === null) return null;
+  if (!name || description === null || fact === null) return null;
   return {
     id: item.id,
     categoryId: item.categoryId,

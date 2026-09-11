@@ -78,6 +78,34 @@
   justify-self: end;
 }
 
+.menu-card__fallback {
+  border: 2px solid rgba(140, 21, 19, 0.16);
+  background: linear-gradient(145deg, #f4e9df, #ead7c9);
+  color: #8c1513;
+  box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.34);
+  font-family: "Philosopher", serif;
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  font-weight: 700;
+}
+
+.menu-card__name {
+  display: -webkit-box;
+  overflow: hidden;
+  min-width: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.gallery-grid {
+  grid-auto-flow: dense;
+  grid-auto-rows: 220px;
+}
+
+.gallery-grid__item:first-child {
+  grid-row: span 2;
+}
+
 .site-hero {
   min-height: max(38rem, 100svh);
 }
@@ -838,9 +866,26 @@
 @media (max-width: 767px) {
   .site-header__inner {
     grid-template-columns: minmax(0, 1fr) auto;
+    padding-right: 0.25rem;
   }
   .site-header__actions {
     grid-column: 2;
+  }
+  .site-header__menu-toggle {
+    margin-right: 0;
+  }
+  .gallery-grid {
+    grid-auto-rows: clamp(7.5rem, 31vw, 10.5rem);
+  }
+  .gallery-grid__item:first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .gallery-grid__item:nth-child(5n + 2) {
+    grid-row: span 2;
+  }
+  .gallery-grid__item:nth-child(5n + 5) {
+    grid-column: span 2;
   }
   .site-section {
     scroll-margin-top: 60px;

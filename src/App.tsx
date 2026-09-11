@@ -56,10 +56,10 @@ const T = {
     hero_cta: "Истражи мени",
     menu_overline: "Наша понуда",
     menu_heading: "Откриј нове укусе",
-    menu_hint: "Кликните на картицу за причу — поново за фотографију",
+    menu_hint: "Отворите картицу за причу — поново за фотографију",
     book_overline: "Комплетна понуда",
     book_heading: "Мени",
-    book_hint: "Листајте као праву књигу — 50 напитака на 10 страница",
+    book_hint: "Прелистајте понуду као праву књигу",
     book_running_head: "Кафе Бабушка",
     book_prev: "Претходна",
     book_next: "Сљедећа",
@@ -101,10 +101,10 @@ const T = {
     hero_cta: "Explore the Menu",
     menu_overline: "Our Offerings",
     menu_heading: "Discover New Tastes",
-    menu_hint: "Tap any card to read the story — tap again to show the photo",
+    menu_hint: "Open a card to read its story — open it again to show the photo",
     book_overline: "Complete Menu",
     book_heading: "Menu",
-    book_hint: "Browse like a real book — 50 drinks over 10 pages",
+    book_hint: "Browse the selection like a real book",
     book_running_head: "Café Babuska",
     book_prev: "Previous",
     book_next: "Next",
@@ -362,6 +362,8 @@ function BookPageCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 
 // ── Menu card — horizontal list view ────
 function MenuCard({ item }: { item: MenuItem }) {
+  const fallbackInitial = item.name.trim().charAt(0).toLocaleUpperCase();
+
   return (
     <div
       className="flex flex-row items-center gap-4 py-4 md:py-5 w-full"
@@ -370,50 +372,63 @@ function MenuCard({ item }: { item: MenuItem }) {
         background: "transparent",
       }}
     >
-      <div
-        className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shrink-0 shadow-sm"
-        style={{ border: "2px solid rgba(221,214,203,0.3)" }}
-      >
-        <img
-          src={item.image}
-          srcSet={item.imageSrcSet || undefined}
-          sizes="96px"
-          alt={item.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          decoding="async"
-          width={96}
-          height={96}
-        />
-      </div>
+      {item.image ? (
+        <div
+          className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden shrink-0 shadow-sm"
+          style={{ border: "2px solid rgba(221,214,203,0.3)" }}
+        >
+          <img
+            src={item.image}
+            srcSet={item.imageSrcSet || undefined}
+            sizes="96px"
+            alt={item.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+            width={96}
+            height={96}
+          />
+        </div>
+      ) : (
+        <div
+          className="menu-card__fallback w-20 h-20 md:w-24 md:h-24 rounded-full shrink-0 flex items-center justify-center"
+          aria-hidden="true"
+        >
+          {fallbackInitial}
+        </div>
+      )}
 
       <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-baseline gap-2 mb-1 md:mb-1.5">
+        <div className="flex justify-between items-start gap-2 mb-1 md:mb-1.5">
           <h4
-            className="text-base md:text-lg font-medium leading-snug text-foreground truncate"
+            className="menu-card__name text-base md:text-lg font-medium leading-snug text-foreground"
             style={{ fontFamily: "Philosopher, serif" }}
           >
             {item.name}
           </h4>
           <span
-            className="text-sm md:text-base font-semibold whitespace-nowrap shrink-0 tabular-nums"
+            className="pt-0.5 text-sm md:text-base font-semibold whitespace-nowrap shrink-0 tabular-nums"
             style={{ color: "#8C1513", fontFamily: "Lora, serif" }}
           >
             {item.price}
           </span>
         </div>
-        <p
-          className="text-xs md:text-sm leading-snug italic truncate"
-          style={{ color: "#75665E", fontFamily: "Lora, serif" }}
-        >
-          {item.ingredients}
-        </p>
-        <p
-          className="text-[10px] md:text-[11px] leading-relaxed mt-1.5 hidden sm:block"
-          style={{ color: "#9A8878", fontFamily: "Lora, serif" }}
-        >
-          {item.fact}
-        </p>
+        {item.ingredients && (
+          <p
+            className="text-xs md:text-sm leading-snug italic truncate"
+            style={{ color: "#75665E", fontFamily: "Lora, serif" }}
+          >
+            {item.ingredients}
+          </p>
+        )}
+        {item.fact && (
+          <p
+            className="text-[10px] md:text-[11px] leading-relaxed mt-1.5 hidden sm:block"
+            style={{ color: "#9A8878", fontFamily: "Lora, serif" }}
+          >
+            {item.fact}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -1475,7 +1490,7 @@ function LandingPage() {
   }, [localizedCategories, activeCategory]);
 
   const visibleItems: MenuItem[] = localizedItems
-    .filter((item) => item.categoryId === activeCategory && item.image)
+    .filter((item) => item.categoryId === activeCategory)
     .map((item) => ({
       category: "Espresso",
       name: item.name,
@@ -1742,9 +1757,10 @@ function LandingPage() {
               <LangSwitch />
             </div>
 
-            <div className="site-header__actions md:hidden flex items-center gap-2">
+            <div className="site-header__actions md:hidden flex items-center gap-1">
+              <LangSwitch />
               <button
-                className="flex flex-col justify-center items-center w-10 h-10 gap-[5px]"
+                className="site-header__menu-toggle flex flex-col justify-center items-center w-11 h-11 gap-[5px]"
                 onClick={() => setMobileNavOpen((v) => !v)}
                 aria-label={
                   mobileNavOpen
@@ -1783,7 +1799,6 @@ function LandingPage() {
                   }}
                 />
               </button>
-              <LangSwitch />
             </div>
           </div>
 
@@ -2038,15 +2053,11 @@ function LandingPage() {
               <h2>{t.gallery_heading}</h2>
             </div>
             <DeferredSection minHeight="680px">
-              <div
-                className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4"
-                style={{ gridAutoRows: "220px" }}
-              >
+              <div className="gallery-grid grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 {publicGallery.map((img, i) => (
                   <div
                     key={i}
-                    className="overflow-hidden group relative cursor-pointer"
-                    style={{ gridRow: i === 0 ? "span 2" : "span 1" }}
+                    className="gallery-grid__item overflow-hidden group relative cursor-pointer"
                     onClick={() => setLightboxImg(i)}
                   >
                     <img
