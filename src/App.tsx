@@ -2053,7 +2053,7 @@ function LandingPage() {
               <h2>{t.gallery_heading}</h2>
             </div>
             <DeferredSection minHeight="680px">
-              <div className="gallery-grid grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+              <div className="gallery-grid">
                 {publicGallery.map((img, i) => (
                   <div
                     key={i}
@@ -2065,7 +2065,7 @@ function LandingPage() {
                       srcSet={img.srcSet || undefined}
                       sizes="(min-width: 768px) 33vw, 50vw"
                       alt={img.alt}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out"
+                      className="gallery-grid__image block w-full h-auto transition-opacity duration-300 ease-out group-hover:opacity-90"
                       style={{ filter: "sepia(8%) brightness(0.96)" }}
                       loading="lazy"
                       decoding="async"
