@@ -172,7 +172,7 @@ type CategoryIconKind =
 function categoryIconKind(category: string): CategoryIconKind {
   const name = category.toLocaleLowerCase();
   if (/(коктел|cocktail)/.test(name)) return "cocktail";
-  if (/(вода|water)/.test(name)) return "water";
+  if (/(вод[аеоиу]|water)/.test(name)) return "water";
   if (/(сок|juice|хладн|cold)/.test(name)) return "juice";
   if (/(цидер|cider)/.test(name)) return "cider";
   if (/(пиво|beer)/.test(name)) return "beer";
@@ -251,10 +251,11 @@ function CategoryFallbackIcon({ category }: { category: string }) {
       )}
       {kind === "water" && (
         <>
-          <path d="M7.2 5.3h9.6l-1 13.2H8.2l-1-13.2Z" />
-          <path d="M7.8 12.1h8.4l-.4 5.4H8.2l-.4-5.4Z" fill="currentColor" stroke="none" opacity="0.14" />
-          <path d="M7.8 12.1c2.1-.55 6.3-.55 8.4 0" />
-          <path d="M10.1 14.7c1.2-.35 2.6-.35 3.8 0" opacity="0.78" />
+          <path d="M7.3 4.7h9.4l-1.1 13.8H8.4L7.3 4.7Z" />
+          <path d="M7.4 4.7c2.5.52 6.7.52 9.2 0" />
+          <path d="M7.9 11.4h8.2l-.45 5.7H8.35L7.9 11.4Z" fill="currentColor" stroke="none" opacity="0.16" />
+          <path d="M7.9 11.4c2.05-.48 6.15-.48 8.2 0" />
+          <path d="M10.1 14.4c1.15-.28 2.65-.28 3.8 0" opacity="0.72" />
         </>
       )}
       {kind === "beer" && (
