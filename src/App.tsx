@@ -185,7 +185,7 @@ function categoryIconKind(category: string): CategoryIconKind {
   )
     return "spirits";
   if (
-    /(вино|wine)/.test(
+    /(вино|вина|wine)/.test(
       name,
     )
   )
@@ -278,9 +278,10 @@ function CategoryFallbackIcon({ category }: { category: string }) {
       )}
       {kind === "spirits" && (
         <>
-          <path d="M6.7 8.1h10.6l-.9 9.4a1.6 1.6 0 0 1-1.6 1.5H9.2a1.6 1.6 0 0 1-1.6-1.5l-.9-9.4Z" />
-          <path d="M8.3 8.1 9.2 5h5.6l.9 3.1" />
-          <path d="m9.1 11.3 3 3-2.5 2.5M13.1 10.7l2.1 2.1-2.5 2.5" />
+          <path d="M6.4 6.6h11.2l-1 10.9a1.6 1.6 0 0 1-1.6 1.5H8.9a1.6 1.6 0 0 1-1.6-1.5L6.4 6.6Z" />
+          <path d="M7.3 12.1h9.4l-.5 5.1H7.8l-.5-5.1Z" fill="currentColor" stroke="none" opacity="0.16" />
+          <path d="M7.3 12.1h9.4" />
+          <path d="m8.7 9.3 2.4 2.4-2.1 2.1-2.1-2.1 1.8-1.8ZM13.2 10.2l2.3 2.3-2.1 2.1-2.1-2.1 1.9-1.9Z" opacity="0.88" />
         </>
       )}
     </svg>
