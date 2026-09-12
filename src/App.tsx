@@ -241,16 +241,20 @@ function CategoryFallbackIcon({ category }: { category: string }) {
       )}
       {kind === "juice" && (
         <>
-          <path d="M7.1 6.7h9.8l-1.1 11.5H8.2L7.1 6.7Z" />
-          <path d="m14.6 3.8 1.5 2.9M16.1 3.7h2.1" />
-          <path d="m9 11.1 2.7 2.7-2.1 2.1M12.9 9.6l2.2 2.2-2.1 2.1" />
+          <path d="M7 6.4h10l-1.1 12.1H8.1L7 6.4Z" />
+          <path d="m14.5 3.8 2.2 4.3M16.1 3.7h2.3" />
+          <path d="M7.6 12.2h8.8l-.5 5.4H8.1l-.5-5.4Z" fill="currentColor" stroke="none" opacity="0.16" />
+          <path d="M7.6 12.2h8.8" />
+          <rect x="8.6" y="9.1" width="2.6" height="2.6" rx="0.35" transform="rotate(-12 9.9 10.4)" />
+          <rect x="12" y="10" width="2.5" height="2.5" rx="0.35" transform="rotate(16 13.25 11.25)" />
         </>
       )}
       {kind === "water" && (
         <>
-          <path d="M7.1 5.4h9.8l-1.1 13.1H8.2L7.1 5.4Z" />
-          <path d="M8.7 13.1c1.9-.8 4.7-.8 6.6 0" />
-          <path d="M12 9.1c1.1 1.3 1.6 2.2 1.6 2.9a1.6 1.6 0 0 1-3.2 0c0-.7.5-1.6 1.6-2.9Z" />
+          <path d="M7.2 5.3h9.6l-1 13.2H8.2l-1-13.2Z" />
+          <path d="M7.8 12.1h8.4l-.4 5.4H8.2l-.4-5.4Z" fill="currentColor" stroke="none" opacity="0.14" />
+          <path d="M7.8 12.1c2.1-.55 6.3-.55 8.4 0" />
+          <path d="M10.1 14.7c1.2-.35 2.6-.35 3.8 0" opacity="0.78" />
         </>
       )}
       {kind === "beer" && (

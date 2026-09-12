@@ -616,10 +616,7 @@ export default function Admin() {
       );
       return;
     }
-    if (
-      !validateCyrillic([draft.nameSr, draft.descriptionSr, draft.factSr])
-    )
-      return;
+    if (!validateCyrillic([draft.nameSr])) return;
     const oldPath = editingItem
       ? (items.find((item) => item.id === draft.id)?.storagePath ?? "")
       : "";
@@ -632,12 +629,12 @@ export default function Admin() {
       image_url: draft.image,
       storage_path: draft.storagePath || null,
       image_variants: draft.imageVariants,
-      description: draft.descriptionSr.trim(),
-      description_sr: draft.descriptionSr.trim(),
-      description_en: draft.descriptionEn.trim(),
-      fact: draft.factSr.trim() || null,
-      fact_sr: draft.factSr.trim() || null,
-      fact_en: draft.factEn.trim() || null,
+      description: "",
+      description_sr: "",
+      description_en: "",
+      fact: null,
+      fact_sr: null,
+      fact_en: null,
       is_published: true,
       ...(editingItem ? {} : { sort_order: items.length }),
     };
@@ -1390,8 +1387,8 @@ export default function Admin() {
                   <p>
                     {categories.length
                       ? tr(
-                          "Назив пића на оба језика и цијена су обавезни. Слика и опис нису обавезни.",
-                          "The drink name in both languages and price are required. An image and description are optional.",
+                          "Назив пића на оба језика и цијена су обавезни. Слика није обавезна.",
+                          "The drink name in both languages and price are required. An image is optional.",
                         )
                       : tr(
                           "Прво креирајте категорију.",
@@ -1471,38 +1468,6 @@ export default function Admin() {
                     busy={uploading === "menu"}
                     language={uiLanguage}
                     onUpload={(file) => uploadFor(file, "menu")}
-                  />
-                </Field>
-                <Field
-                  label={tr("Опис / састојци", "Description / ingredients")}
-                  hint={tr("Необавезно", "Optional")}
-                  full
-                >
-                  <textarea
-                    className="admin-input admin-textarea"
-                    value={draft[localizedItemKey("description")]}
-                    onChange={(event) =>
-                      setDraft({
-                        ...draft,
-                        [localizedItemKey("description")]: event.target.value,
-                      })
-                    }
-                  />
-                </Field>
-                <Field
-                  label={tr("Занимљивост", "Fact")}
-                  hint={tr("Необавезно", "Optional")}
-                  full
-                >
-                  <textarea
-                    className="admin-input admin-textarea"
-                    value={draft[localizedItemKey("fact")]}
-                    onChange={(event) =>
-                      setDraft({
-                        ...draft,
-                        [localizedItemKey("fact")]: event.target.value,
-                      })
-                    }
                   />
                 </Field>
               </div>

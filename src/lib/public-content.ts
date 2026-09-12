@@ -6,7 +6,7 @@ import type {
 } from "./content";
 import { parseMediaVariants } from "./media-variants";
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const REQUEST_TIMEOUT_MS = 8_000;
 export const PUBLIC_CONTENT_CACHE_KEY = "cafe-babuska:public-content:v1";
 
@@ -167,10 +167,13 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
       image: string(row.image_url),
       storagePath: string(row.storage_path),
       imageVariants: parseMediaVariants(row.image_variants),
-      descriptionSr: string(row.description_sr),
-      descriptionEn: string(row.description_en),
-      factSr: string(row.fact_sr),
-      factEn: string(row.fact_en),
+      // The public menu intentionally contains only the drink name and price.
+      // Older records may still carry placeholder text such as "Тест" / "Test";
+      // never expose it while the administrator is cleaning up legacy content.
+      descriptionSr: "",
+      descriptionEn: "",
+      factSr: "",
+      factEn: "",
       sortOrder: number(row.sort_order),
     }))
     .filter((item) => item.id && item.categoryId)

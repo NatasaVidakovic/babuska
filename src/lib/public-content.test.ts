@@ -67,6 +67,10 @@ describe("public content bootstrap", () => {
     );
     expect(result.categories[0]?.nameSr).toBe("Кафа");
     expect(result.items[0]?.imageVariants).toEqual({});
+    expect(result.items[0]?.descriptionSr).toBe("");
+    expect(result.items[0]?.descriptionEn).toBe("");
+    expect(result.items[0]?.factSr).toBe("");
+    expect(result.items[0]?.factEn).toBe("");
     expect(result.settings.heroImageVariants["640"]?.width).toBe(640);
   });
 
@@ -86,7 +90,7 @@ describe("public content bootstrap", () => {
     values.set(
       PUBLIC_CONTENT_CACHE_KEY,
       JSON.stringify({
-        version: 1,
+        version: 2,
         data: { settings: {}, categories: [], items: [], gallery: [] },
       }),
     );
