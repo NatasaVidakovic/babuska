@@ -414,26 +414,16 @@ export default function Admin() {
       "translate-content",
       { body: { entries: missing.map(({ key, sr }) => ({ key, sr })) } },
     );
-    if (error) throw error;
+    // A translation is optional. Saving Serbian content must still work if the
+    // administrator has not configured the translation service yet.
+    if (error) return existing;
     const translations = data?.translations as
       | { key?: string; en?: string; ru?: string }[]
       | undefined;
-    if (!Array.isArray(translations))
-      throw new Error(
-        tr(
-          "Аутоматски превод тренутно није доступан.",
-          "Automatic translation is currently unavailable.",
-        ),
-      );
+    if (!Array.isArray(translations)) return existing;
     for (const entry of missing) {
       const translated = translations.find((item) => item.key === entry.key);
-      if (!translated?.en?.trim() || !translated.ru?.trim())
-        throw new Error(
-          tr(
-            "Није могуће довршити све преводе. Покушајте поново.",
-            "All translations could not be completed. Please try again.",
-          ),
-        );
+      if (!translated?.en?.trim() || !translated.ru?.trim()) continue;
       existing[entry.key] = {
         en: entry.en || translated.en.trim(),
         ru: entry.ru || translated.ru.trim(),
