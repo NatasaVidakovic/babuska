@@ -553,3 +553,14 @@ git commit -m "docs: describe Russian localization"
 - Unknown categories render an ordinary glass.
 - The migration preserves RLS/grants and the `stories` payload.
 - `npm run check` passes; applicable local Supabase smoke tests pass or their environmental blocker is reported.
+
+## Execution record — 2026-09-13
+
+- DONE: Russian public UI, optional Russian content fields, Serbian fallback, `РУ` selector, Russian book/menu/gallery/settings content.
+- DONE: vodka and whiskey share the spirits icon; unknown categories use the ordinary-glass fallback.
+- DONE: canonical dry run validates 105 items across 16 trilingual categories.
+- PASS: `npm run typecheck`.
+- PASS: `npm run test` — 8 files, 43 tests.
+- PASS: `npm run build`.
+- PASS: syntax checks for all changed `.mjs` scripts and `git diff --check`.
+- BLOCKED BY ENVIRONMENT: local migration and browser smoke tests require the local Supabase stack, but Docker Desktop's Linux engine is not running and port 54332 has no database listener.

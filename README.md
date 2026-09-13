@@ -1,6 +1,6 @@
 # Café Babuska
 
-Responsive React/Vite landing page with a Supabase backend for bilingual menu content, homepage text, gallery media, footer details, social links, and administrator access. Serbian Cyrillic is the default public and admin language; English is available as a complete alternative.
+Responsive React/Vite landing page with a Supabase backend for trilingual menu content, homepage text, gallery media, footer details, social links, and administrator access. Serbian Cyrillic is the default public and admin language; English and Russian are complete public alternatives. Russian content is optional in the administrator and falls back to Serbian when it has not been entered yet.
 
 ## Local development
 
@@ -33,7 +33,7 @@ npm run seed:demo
 
 `setup:local-admin` requires `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_ADMIN_EMAIL`, and `SUPABASE_ADMIN_PASSWORD` in the local environment. The secret key is used only by that local maintenance script. Normal admin, seed, migration, and smoke flows authenticate with the configured email/password and the public browser key.
 
-The demo seed is idempotent. It creates five bilingual categories, 30 bilingual menu items, a hero image, and five gallery images. Content images are downloaded once and then stored under `hero/`, `menu/`, or `gallery/` in the `cafe-media` Supabase Storage bucket; public database rows do not point to third-party image hosts.
+The demo seed is idempotent. It creates five trilingual categories, 30 trilingual menu items, a hero image, and five gallery images. Content images are downloaded once and then stored under `hero/`, `menu/`, or `gallery/` in the `cafe-media` Supabase Storage bucket; public database rows do not point to third-party image hosts.
 
 Existing external content media can be moved safely with:
 
@@ -51,7 +51,7 @@ npm run backfill:media-variants
 
 The backfill is authenticated and idempotent. It keeps original uploads, writes immutable menu/gallery derivatives, and refreshes only the stable `hero/current-*.webp` objects.
 
-To validate the canonical 105-item Canva menu without a database write, run:
+To validate the canonical 105-item trilingual Canva menu without a database write, run:
 
 ```powershell
 npm run sync:canva-menu

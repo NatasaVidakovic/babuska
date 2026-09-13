@@ -302,6 +302,7 @@ export function readPublicContentCache(
       parsed?.version !== CACHE_VERSION ||
       !cachedSettings ||
       typeof cachedSettings.heroImage !== "string" ||
+      typeof cachedSettings.heroTitleRu !== "string" ||
       !record(cachedSettings.heroImageVariants) ||
       !Array.isArray(parsed.data?.categories) ||
       !Array.isArray(parsed.data?.items) ||
@@ -316,11 +317,13 @@ export function readPublicContentCache(
       !parsed.data.items.every(
         (item: unknown) =>
           typeof record(item)?.id === "string" &&
+          typeof record(item)?.nameRu === "string" &&
           Boolean(record(record(item)?.imageVariants)),
       ) ||
       !parsed.data.gallery.every(
         (item: unknown) =>
           typeof record(item)?.id === "string" &&
+          typeof record(item)?.altRu === "string" &&
           Boolean(record(record(item)?.imageVariants)),
       ) ||
       !parsed.data.stories.every(

@@ -707,8 +707,8 @@ export default function Admin() {
     if (!nameSr || !nameEn) {
       notice(
         tr(
-          "Унесите назив категорије на оба језика.",
-          "Enter the category name in both languages.",
+          "Унесите назив категорије на српском и енглеском. Руски је необавезан.",
+          "Enter the category name in Serbian and English. Russian is optional.",
         ),
         "error",
       );
@@ -871,8 +871,8 @@ export default function Admin() {
     ) {
       notice(
         tr(
-          "Пренесите слику и унесите опис на оба језика.",
-          "Upload an image and enter descriptions in both languages.",
+          "Пренесите слику и унесите опис на српском и енглеском. Руски је необавезан.",
+          "Upload an image and enter Serbian and English descriptions. Russian is optional.",
         ),
         "error",
       );
@@ -1642,8 +1642,8 @@ export default function Admin() {
                   <p>
                     {categories.length
                       ? tr(
-                          "Назив пића на оба језика и цијена су обавезни. Слика није обавезна.",
-                          "The drink name in both languages and price are required. An image is optional.",
+                          "Назив пића на српском и енглеском и цијена су обавезни. Руски превод и слика нису обавезни.",
+                          "The Serbian and English drink names and price are required. Russian and the image are optional.",
                         )
                       : tr(
                           "Прво креирајте категорију.",

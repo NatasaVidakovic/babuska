@@ -22,7 +22,7 @@ const png = Buffer.from(
   "base64",
 );
 const settingColumns =
-  "id, instagram, facebook, tiktok, phone, email, social_handle, hero_image_url, hero_image_storage_path, hero_image_variants, hero_title_sr, hero_title_en, hero_description_sr, hero_description_en, hero_cta_sr, hero_cta_en, footer_address_heading_sr, footer_address_heading_en, footer_address_line_1_sr, footer_address_line_1_en, footer_address_line_2_sr, footer_address_line_2_en, footer_address_line_3_sr, footer_address_line_3_en, footer_hours_heading_sr, footer_hours_heading_en, footer_hours_line_1_sr, footer_hours_line_1_en, footer_hours_line_2_sr, footer_hours_line_2_en, footer_hours_line_3_sr, footer_hours_line_3_en, footer_contact_heading_sr, footer_contact_heading_en, footer_copyright_sr, footer_copyright_en";
+  "id, instagram, facebook, tiktok, phone, email, social_handle, hero_image_url, hero_image_storage_path, hero_image_variants, hero_title_sr, hero_title_en, hero_title_ru, hero_description_sr, hero_description_en, hero_description_ru, hero_cta_sr, hero_cta_en, hero_cta_ru, footer_address_heading_sr, footer_address_heading_en, footer_address_heading_ru, footer_address_line_1_sr, footer_address_line_1_en, footer_address_line_1_ru, footer_address_line_2_sr, footer_address_line_2_en, footer_address_line_2_ru, footer_address_line_3_sr, footer_address_line_3_en, footer_address_line_3_ru, footer_hours_heading_sr, footer_hours_heading_en, footer_hours_heading_ru, footer_hours_line_1_sr, footer_hours_line_1_en, footer_hours_line_1_ru, footer_hours_line_2_sr, footer_hours_line_2_en, footer_hours_line_2_ru, footer_hours_line_3_sr, footer_hours_line_3_en, footer_hours_line_3_ru, footer_contact_heading_sr, footer_contact_heading_en, footer_contact_heading_ru, footer_copyright_sr, footer_copyright_en, footer_copyright_ru";
 
 const { error: signInError } = await admin.auth.signInWithPassword({
   email,
@@ -110,10 +110,13 @@ try {
     hero_image_variants: variants(heroVariantPath, 640),
     hero_title_sr: "Провјера почетне странице",
     hero_title_en: `${marker} EN`,
+    hero_title_ru: "Проверка главной страницы",
     hero_description_sr: "Опис на српском за провјеру.",
     hero_description_en: "English description for the smoke check.",
+    hero_description_ru: "Описание на русском для проверки.",
     hero_cta_sr: "Отвори мени",
     hero_cta_en: "Open menu",
+    hero_cta_ru: "Открыть меню",
     footer_address_heading_sr: "Адреса провјере",
     footer_address_heading_en: "Smoke address",
     footer_address_line_1_sr: "Улица 1",
@@ -134,6 +137,7 @@ try {
     footer_contact_heading_en: "Smoke contact",
     footer_copyright_sr: "Провјера ауторских права",
     footer_copyright_en: marker,
+    footer_copyright_ru: "Проверка авторских прав",
     phone: "+38765000111",
     email: "smoke@cafebabuska.local",
     social_handle: "@cafe-babuska-smoke",
@@ -151,6 +155,7 @@ try {
       name: "Привремено пиће",
       name_sr: "Привремено пиће",
       name_en: `${marker} menu`,
+      name_ru: "Временный напиток",
       price: "9.90 КМ",
       image_url: menuUrl,
       storage_path: menuPath,
@@ -158,9 +163,11 @@ try {
       description: "Привремена слика производа.",
       description_sr: "Привремена слика производа.",
       description_en: "Temporary product image.",
+      description_ru: "Временное изображение напитка.",
       fact: "Провјера.",
       fact_sr: "Провјера.",
       fact_en: marker,
+      fact_ru: "Проверка.",
       is_published: true,
       sort_order: 9999,
     })
@@ -180,6 +187,7 @@ try {
       image_variants: variants(galleryVariantPath, 640),
       alt_sr: "Привремена галеријска слика",
       alt_en: `${marker} EN`,
+      alt_ru: "Временное изображение галереи",
       is_published: true,
       sort_order: 9999,
     })
@@ -199,18 +207,18 @@ try {
     anonymous
       .from("site_settings")
       .select(
-        "hero_image_storage_path, hero_image_variants, hero_title_sr, hero_title_en, footer_hours_heading_sr",
+        "hero_image_storage_path, hero_image_variants, hero_title_sr, hero_title_en, hero_title_ru, footer_hours_heading_sr",
       )
       .eq("id", 1)
       .single(),
     anonymous
       .from("menu_items")
-      .select("storage_path, image_variants, name_sr, name_en")
+      .select("storage_path, image_variants, name_sr, name_en, name_ru")
       .eq("id", menuItemId)
       .single(),
     anonymous
       .from("gallery_items")
-      .select("storage_path, image_variants, alt_sr, alt_en")
+      .select("storage_path, image_variants, alt_sr, alt_en, alt_ru")
       .eq("id", galleryItemId)
       .single(),
   ]);
@@ -218,7 +226,8 @@ try {
     publicSettingsError ||
     publicSettings.hero_image_storage_path !== heroPath ||
     !publicSettings.hero_image_variants?.["640"] ||
-    publicSettings.hero_title_sr !== "Провјера почетне странице"
+    publicSettings.hero_title_sr !== "Провјера почетне странице" ||
+    publicSettings.hero_title_ru !== "Проверка главной страницы"
   )
     throw new Error(
       `Public settings read failed: ${publicSettingsError?.message ?? "wrong values"}`,
@@ -227,7 +236,8 @@ try {
     publicMenuError ||
     publicMenu.storage_path !== menuPath ||
     !publicMenu.image_variants?.["480"] ||
-    publicMenu.name_sr !== "Привремено пиће"
+    publicMenu.name_sr !== "Привремено пиће" ||
+    publicMenu.name_ru !== "Временный напиток"
   )
     throw new Error(
       `Public menu read failed: ${publicMenuError?.message ?? "wrong values"}`,
@@ -236,7 +246,8 @@ try {
     publicGalleryError ||
     publicGallery.storage_path !== galleryPath ||
     !publicGallery.image_variants?.["640"] ||
-    publicGallery.alt_sr !== "Привремена галеријска слика"
+    publicGallery.alt_sr !== "Привремена галеријска слика" ||
+    publicGallery.alt_ru !== "Временное изображение галереи"
   )
     throw new Error(
       `Public gallery read failed: ${publicGalleryError?.message ?? "wrong values"}`,

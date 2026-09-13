@@ -51,6 +51,15 @@ assertIds("Categories", bootstrap.categories, categories);
 assertIds("Menu items", bootstrap.items, items);
 assertIds("Gallery", bootstrap.gallery, gallery);
 
+if (
+  typeof bootstrap.settings.hero_title_ru !== "string" ||
+  bootstrap.categories.some((category) => !("name_ru" in category)) ||
+  bootstrap.items.some((item) => !("name_ru" in item)) ||
+  bootstrap.gallery.some((item) => !("alt_ru" in item))
+) {
+  throw new Error("Bootstrap is missing Russian localized fields.");
+}
+
 for (const forbidden of ["is_active", "is_published", "created_at", "updated_at"]) {
   if (JSON.stringify(bootstrap).includes(`\"${forbidden}\"`)) {
     throw new Error(`Bootstrap exposes internal field ${forbidden}.`);

@@ -182,6 +182,21 @@ try {
     languageState.heading !== "A Taste of Moscow in Banja Luka"
   )
     throw new Error("English translation did not activate completely.");
+  await languagePage
+    .getByRole("button", { name: "РУ", exact: true })
+    .filter({ visible: true })
+    .click();
+  const russianState = await languagePage.evaluate(() => ({
+    lang: document.documentElement.lang,
+    heading: document.querySelector("h1")?.textContent?.trim(),
+    menu: document.querySelector('a[href="#menu"]')?.textContent?.trim(),
+  }));
+  if (
+    russianState.lang !== "ru" ||
+    russianState.heading !== "Вкус Москвы в Баня-Луке" ||
+    russianState.menu !== "Меню"
+  )
+    throw new Error("Russian translation did not activate completely.");
   await languagePage.close();
 
   const admin = await browser.newPage({

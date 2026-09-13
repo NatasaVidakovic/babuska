@@ -100,16 +100,18 @@ try {
 
   const categorySr = `Провјера ${Date.now()}`;
   const categoryEn = `${marker} category`;
+  const categoryRu = `Категория ${Date.now()}`;
   const { data: category, error: categoryError } = await admin
     .from("menu_categories")
     .insert({
       name: categorySr,
       name_sr: categorySr,
       name_en: categoryEn,
+      name_ru: categoryRu,
       sort_order: 9999,
       is_active: true,
     })
-    .select("id, name_sr, name_en")
+    .select("id, name_sr, name_en, name_ru")
     .single();
   if (categoryError || !category)
     fail(`Could not add smoke category: ${categoryError?.message}`);
@@ -117,13 +119,14 @@ try {
 
   const { data: publicCategory, error: publicCategoryError } = await anonymous
     .from("menu_categories")
-    .select("id, name_sr, name_en")
+    .select("id, name_sr, name_en, name_ru")
     .eq("id", category.id)
     .single();
   if (
     publicCategoryError ||
     publicCategory?.name_sr !== categorySr ||
-    publicCategory.name_en !== categoryEn
+    publicCategory.name_en !== categoryEn ||
+    publicCategory.name_ru !== categoryRu
   )
     fail(
       `Public category query failed: ${publicCategoryError?.message ?? "wrong category"}`,
@@ -131,20 +134,24 @@ try {
 
   const itemSr = `Пиће ${Date.now()}`;
   const itemEn = `${marker} drink`;
+  const itemRu = `Напиток ${Date.now()}`;
   const { data: item, error: itemError } = await admin
     .from("menu_items")
     .insert({
       name: itemSr,
       name_sr: itemSr,
       name_en: itemEn,
+      name_ru: itemRu,
       category_id: category.id,
       price: "9.90 КМ",
       description: "Привремена провјера јавне картице.",
       description_sr: "Привремена провјера јавне картице.",
       description_en: "Temporary public-card check.",
+      description_ru: "Временная проверка публичной карточки.",
       fact: "Провјера.",
       fact_sr: "Провјера.",
       fact_en: "Smoke test fact.",
+      fact_ru: "Факт для проверки.",
       is_published: true,
       sort_order: 9999,
     })
@@ -157,14 +164,15 @@ try {
   const { data: publicItem, error: publicItemError } = await anonymous
     .from("menu_items")
     .select(
-      "id, name_sr, name_en, price, description_sr, description_en, fact_sr, fact_en",
+      "id, name_sr, name_en, name_ru, price, description_sr, description_en, description_ru, fact_sr, fact_en, fact_ru",
     )
     .eq("id", item.id)
     .single();
   if (
     publicItemError ||
     publicItem?.name_sr !== itemSr ||
-    publicItem.name_en !== itemEn
+    publicItem.name_en !== itemEn ||
+    publicItem.name_ru !== itemRu
   )
     fail(
       `Public menu item query failed: ${publicItemError?.message ?? "wrong menu item"}`,
@@ -172,12 +180,14 @@ try {
 
   const updatedName = `${marker} updated`;
   const updatedNameSr = `Измијењено пиће ${Date.now()}`;
+  const updatedNameRu = `Изменённый напиток ${Date.now()}`;
   const { error: updateError } = await admin
     .from("menu_items")
     .update({
       name: updatedNameSr,
       name_sr: updatedNameSr,
       name_en: updatedName,
+      name_ru: updatedNameRu,
       price: "10.90 КМ",
     })
     .eq("id", item.id);
@@ -185,13 +195,14 @@ try {
     fail(`Could not update smoke menu item: ${updateError.message}`);
   const { data: updatedItem, error: updatedItemError } = await anonymous
     .from("menu_items")
-    .select("name_sr, name_en, price")
+    .select("name_sr, name_en, name_ru, price")
     .eq("id", item.id)
     .single();
   if (
     updatedItemError ||
     updatedItem?.name_sr !== updatedNameSr ||
     updatedItem.name_en !== updatedName ||
+    updatedItem.name_ru !== updatedNameRu ||
     updatedItem.price !== "10.90 КМ"
   )
     fail(
