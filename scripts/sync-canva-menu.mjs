@@ -228,15 +228,29 @@ async function main() {
     if (result.error) throw new Error(`Could not save ${row.nameSr}: ${result.error.message}`);
   }
   const temporaryIds = (existingItems ?? []).filter((item) => temporaryNames.includes(normalize(item.name_sr ?? item.name ?? ""))).map((item) => item.id);
-  if (temporaryIds.length !== 3) throw new Error(`Expected 3 approved temporary rows, found ${temporaryIds.length}.`);
-  const { error: deleteError } = await client.from("menu_items").delete().in("id", temporaryIds);
-  if (deleteError) throw new Error(`Could not remove temporary rows: ${deleteError.message}`);
+  if (temporaryIds.length > 3) throw new Error(`Found ${temporaryIds.length} rows matching approved temporary names.`);
+  if (temporaryIds.length) {
+    const { error: deleteError } = await client.from("menu_items").delete().in("id", temporaryIds);
+    if (deleteError) throw new Error(`Could not remove temporary rows: ${deleteError.message}`);
+  }
+  const expected = new Set(rows.map((row) => `${categoryIds.get(row.categoryId)}:${normalize(row.nameSr)}:${row.price}`));
+  const sourceCategoryIds = new Set(categoryIds.values());
+  const { data: candidates, error: candidateError } = await client.from("menu_items").select("id, category_id, name_sr, price").eq("is_published", true);
+  if (candidateError) throw new Error(candidateError.message);
+  const staleIds = (candidates ?? [])
+    .filter((item) => sourceCategoryIds.has(item.category_id))
+    .filter((item) => !expected.has(`${item.category_id}:${normalize(item.name_sr)}:${item.price}`))
+    .map((item) => item.id);
+  if (staleIds.length > 12) throw new Error(`Refusing to remove ${staleIds.length} unexpected legacy rows.`);
+  if (staleIds.length) {
+    const { error: staleDeleteError } = await client.from("menu_items").delete().in("id", staleIds);
+    if (staleDeleteError) throw new Error(`Could not remove legacy duplicates: ${staleDeleteError.message}`);
+  }
   const { data: finalItems, error: finalError } = await client.from("menu_items").select("id, category_id, name_sr, name_en, price, description_sr, description_en, fact_sr, fact_en").eq("is_published", true);
   if (finalError) throw new Error(finalError.message);
-  const expected = new Set(rows.map((row) => `${categoryIds.get(row.categoryId)}:${normalize(row.nameSr)}:${row.price}`));
   const actual = new Set((finalItems ?? []).map((item) => `${item.category_id}:${normalize(item.name_sr)}:${item.price}`));
   if (expected.size !== actual.size || [...expected].some((key) => !actual.has(key))) throw new Error("Post-write verification failed: published menu does not exactly match Canva dataset.");
-  console.log(JSON.stringify({ mode: "applied", rows: actual.size, deletedTemporaryRows: temporaryIds.length, perCategory }, null, 2));
+  console.log(JSON.stringify({ mode: "applied", rows: actual.size, deletedTemporaryRows: temporaryIds.length, deletedLegacyRows: staleIds.length, perCategory }, null, 2));
   await client.auth.signOut();
 }
 
