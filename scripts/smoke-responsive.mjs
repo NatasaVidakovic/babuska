@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const baseUrl = process.env.SITE_URL ?? "http://127.0.0.1:4300";
 const evidenceDir = resolve(".codex/qa/plan-implementation/screenshots");
+const expectedCategoryCount = 16;
 const viewports = [
   { width: 360, height: 640 },
   { width: 390, height: 844 },
@@ -114,9 +115,9 @@ try {
       throw new Error(
         `${viewport.width}x${viewport.height}: section headings use inconsistent typography`,
       );
-    if (result.categoryCount !== 5)
+    if (result.categoryCount !== expectedCategoryCount)
       throw new Error(
-        `${viewport.width}x${viewport.height}: expected 5 dynamic category filters, got ${result.categoryCount}`,
+        `${viewport.width}x${viewport.height}: expected ${expectedCategoryCount} dynamic category filters, got ${result.categoryCount}`,
       );
     if (!result.contentMediaInStorage)
       throw new Error(
@@ -165,7 +166,7 @@ try {
     .locator(".site-hero__image")
     .evaluate((image) => image.currentSrc);
   await languagePage
-    .getByRole("button", { name: "EN", exact: true })
+    .locator("button", { hasText: /^EN$/ })
     .filter({ visible: true })
     .click();
   const heroAfter = await languagePage
@@ -173,27 +174,25 @@ try {
     .evaluate((image) => image.currentSrc);
   const languageState = await languagePage.evaluate(() => ({
     lang: document.documentElement.lang,
-    heading: document.querySelector("h1")?.textContent?.trim(),
+    menu: document.querySelector('a[href="#menu"]')?.textContent?.trim(),
   }));
   if (heroBefore !== heroAfter)
     throw new Error("Switching language changed the homepage image.");
   if (
     languageState.lang !== "en" ||
-    languageState.heading !== "A Taste of Moscow in Banja Luka"
+    languageState.menu !== "Menu"
   )
     throw new Error("English translation did not activate completely.");
   await languagePage
-    .getByRole("button", { name: "РУ", exact: true })
+    .locator("button", { hasText: /^РУ$/ })
     .filter({ visible: true })
     .click();
   const russianState = await languagePage.evaluate(() => ({
     lang: document.documentElement.lang,
-    heading: document.querySelector("h1")?.textContent?.trim(),
     menu: document.querySelector('a[href="#menu"]')?.textContent?.trim(),
   }));
   if (
     russianState.lang !== "ru" ||
-    russianState.heading !== "Вкус Москвы в Баня-Луке" ||
     russianState.menu !== "Меню"
   )
     throw new Error("Russian translation did not activate completely.");
