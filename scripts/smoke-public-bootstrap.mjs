@@ -60,6 +60,17 @@ if (
   throw new Error("Bootstrap is missing Russian localized fields.");
 }
 
+if (
+  bootstrap.stories.some(
+    (story) =>
+      !("description_sr" in story) ||
+      !("description_en" in story) ||
+      !("description_ru" in story),
+  )
+) {
+  throw new Error("Bootstrap is missing localized story descriptions.");
+}
+
 for (const forbidden of ["is_active", "is_published", "created_at", "updated_at"]) {
   if (JSON.stringify(bootstrap).includes(`\"${forbidden}\"`)) {
     throw new Error(`Bootstrap exposes internal field ${forbidden}.`);
