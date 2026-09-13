@@ -39,6 +39,9 @@ try {
       const storyImage = document
         .querySelector(".site-hero__story-ring img")
         ?.getBoundingClientRect();
+      const storyLabel = document
+        .querySelector(".site-hero__story > span:last-child")
+        ?.textContent?.trim();
       const heroOrnaments = [
         ...document.querySelectorAll(".site-hero__ornament"),
       ].map((node) => node.getBoundingClientRect());
@@ -97,6 +100,7 @@ try {
             Math.abs(storyImage.width - storyImage.height) < 0.5 &&
             storyImage.width <= storyRing.width &&
             storyImage.height <= storyRing.height),
+        storyHasLabel: !storyRing || Boolean(storyLabel),
       };
     });
     if (result.overflow > 1)
@@ -142,6 +146,10 @@ try {
     if (!result.storyThumbnailIsCircular)
       throw new Error(
         `${viewport.width}x${viewport.height}: story thumbnail is not a true circle`,
+      );
+    if (!result.storyHasLabel)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: story thumbnail has no description or fallback label`,
       );
 
     await page.locator(".site-section--book").scrollIntoViewIfNeeded();

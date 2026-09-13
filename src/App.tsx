@@ -1853,7 +1853,7 @@ function LandingPage() {
         activeStories[0].descriptionRu,
         lang,
         true,
-      ) ?? PUBLIC_COPY[lang].stories
+      ) || PUBLIC_COPY[lang].stories
     : PUBLIC_COPY[lang].stories;
   const stableHeroSources = [640, 1280, 1920]
     .map((width) => ({
