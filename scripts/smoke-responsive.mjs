@@ -115,6 +115,12 @@ try {
           (storyLabelStyle?.whiteSpace === "nowrap" &&
             storyLabelRect.left >= -0.5 &&
             storyLabelRect.right <= window.innerWidth + 0.5),
+        storyLabelIsTextOnly:
+          !storyLabelStyle ||
+          (storyLabelStyle.borderTopWidth === "0px" &&
+            storyLabelStyle.backgroundColor === "rgba(0, 0, 0, 0)" &&
+            storyLabelStyle.boxShadow === "none" &&
+            storyLabelStyle.textShadow !== "none"),
         heroDescriptionIsReadable:
           !heroDescriptionStyle ||
           (Number.parseFloat(heroDescriptionStyle.fontSize) >= 16 &&
@@ -173,6 +179,10 @@ try {
     if (!result.storyLabelIsSingleLine)
       throw new Error(
         `${viewport.width}x${viewport.height}: story description is not a viewport-safe single line`,
+      );
+    if (!result.storyLabelIsTextOnly)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: story description still has a border/background or lacks text contrast`,
       );
     if (!result.heroDescriptionIsReadable)
       throw new Error(
