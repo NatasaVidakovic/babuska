@@ -18,7 +18,8 @@ export function categoryIconKind(category: string): CategoryIconKind {
   if (/(вод[аеоиу]|вода|water)/.test(name)) return "water";
   if (/(сок|juice|хладн|холодн|cold)/.test(name)) return "juice";
   if (/(цидер|сајдер|cider)/.test(name)) return "cider";
-  if (/(сладолед|морожен|гелато|gelato|ice cream)/.test(name)) return "gelato";
+  if (/(сладолед|морожен|џелато|джелато|гелато|gelato|ice cream)/.test(name))
+    return "gelato";
   if (/(пиво|beer)/.test(name)) return "beer";
   if (/(чај|чай|tea|инфуз|infusion)/.test(name)) return "tea";
   if (/(ракиј|schnapps)/.test(name)) return "rakija";

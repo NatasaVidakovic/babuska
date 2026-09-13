@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 import { categoryIconKind } from "./category-icons";
 
 describe("category icon classification", () => {
+  it.each(["Мила џелато", "Milla Gelato", "Милла Джелато"])(
+    "uses the gelato icon for %s",
+    (category) => {
+      expect(categoryIconKind(category)).toBe("gelato");
+    },
+  );
+
   it.each([
     "Виски бурбон",
     "Whisky / Bourbon",
