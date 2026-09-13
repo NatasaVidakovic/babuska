@@ -1,12 +1,13 @@
 import type {
   AdminGalleryItem,
   AdminMenuItem,
+  AdminStoryItem,
   MenuCategory,
   SiteSettings,
 } from "./content";
 import { parseMediaVariants } from "./media-variants";
 
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const REQUEST_TIMEOUT_MS = 8_000;
 export const PUBLIC_CONTENT_CACHE_KEY = "cafe-babuska:public-content:v1";
 
@@ -15,6 +16,7 @@ export type PublicContentSnapshot = {
   categories: MenuCategory[];
   items: AdminMenuItem[];
   gallery: AdminGalleryItem[];
+  stories: AdminStoryItem[];
 };
 
 export type PublicSupabaseConfig = { url: string; key: string };
@@ -194,11 +196,37 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
     }))
     .filter((item) => item.id && item.image)
     .sort((left, right) => left.sortOrder - right.sortOrder);
+  const stories = array(root.stories)
+    .map(record)
+    .filter((row): row is Record<string, unknown> => Boolean(row))
+    .map((row) => ({
+      id: string(row.id),
+      image: string(row.image_url),
+      storagePath: string(row.storage_path),
+      imageVariants: parseMediaVariants(row.image_variants),
+      sortOrder: number(row.sort_order),
+      isPublished: true,
+      publishedAt: string(row.published_at),
+      expiresAt: string(row.expires_at),
+    }))
+    .filter(
+      (item) =>
+        Boolean(item.id) &&
+        Boolean(item.image) &&
+        Number.isFinite(Date.parse(item.publishedAt)) &&
+        Date.parse(item.expiresAt) > Date.now(),
+    )
+    .sort(
+      (left, right) =>
+        Date.parse(right.publishedAt) - Date.parse(left.publishedAt) ||
+        right.id.localeCompare(left.id),
+    );
   return {
     settings: settingsFromRaw(root.settings),
     categories,
     items,
     gallery,
+    stories,
   };
 }
 
@@ -247,6 +275,7 @@ export function readPublicContentCache(
       !Array.isArray(parsed.data?.categories) ||
       !Array.isArray(parsed.data?.items) ||
       !Array.isArray(parsed.data?.gallery) ||
+      !Array.isArray(parsed.data?.stories) ||
       !parsed.data.categories.every(
         (category: unknown) =>
           typeof record(category)?.id === "string" &&
@@ -260,6 +289,13 @@ export function readPublicContentCache(
       !parsed.data.gallery.every(
         (item: unknown) =>
           typeof record(item)?.id === "string" &&
+          Boolean(record(record(item)?.imageVariants)),
+      ) ||
+      !parsed.data.stories.every(
+        (item: unknown) =>
+          typeof record(item)?.id === "string" &&
+          typeof record(item)?.image === "string" &&
+          typeof record(item)?.expiresAt === "string" &&
           Boolean(record(record(item)?.imageVariants)),
       )
     )

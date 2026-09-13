@@ -5,12 +5,14 @@ import heroWordmark from "./assets/brand/logo-wordmark.webp";
 import defaultHomeHero from "./assets/hero/default-home.webp";
 import HeroLoader from "./components/HeroLoader";
 import DeferredSection from "./components/DeferredSection";
+import StoryViewer from "./components/StoryViewer";
 import {
   localizeCategories,
   localizeMenuItems,
   localizedText,
   type AdminGalleryItem,
   type AdminMenuItem,
+  type AdminStoryItem,
   type Lang,
   type MenuCategory,
   type SiteSettings,
@@ -38,6 +40,7 @@ export type SocialLinks = {
 export type {
   AdminGalleryItem,
   AdminMenuItem,
+  AdminStoryItem,
   MenuCategory,
   SiteSettings,
 } from "./lib/content";
@@ -1571,6 +1574,8 @@ function LandingPage() {
   const [adminGalleryItems, setAdminGalleryItems] = useState<
     AdminGalleryItem[]
   >([]);
+  const [stories, setStories] = useState<AdminStoryItem[]>([]);
+  const [storyViewerIndex, setStoryViewerIndex] = useState<number | null>(null);
 
   useEffect(() => {
     document.documentElement.lang = lang === "sr" ? "sr-Cyrl" : "en";
@@ -1588,6 +1593,7 @@ function LandingPage() {
       setMenuCategories(snapshot.categories);
       setAdminItems(snapshot.items);
       setAdminGalleryItems(snapshot.gallery);
+      setStories(snapshot.stories);
     };
 
     const cached = readPublicContentCache();
@@ -1732,7 +1738,10 @@ function LandingPage() {
     : galleryImages.map((item) => ({
         src: item.src,
         alt: localizedText(item.altSr, item.altEn, lang) ?? item.altSr,
-      }));
+    }));
+  const activeStories = stories.filter(
+    (story) => Date.parse(story.expiresAt) > Date.now() && story.isPublished,
+  );
   const stableHeroSources = [640, 1280, 1920]
     .map((width) => ({
       width,
@@ -2090,6 +2099,28 @@ function LandingPage() {
             >
               {pageContent.heroDescription}
             </p>
+            {activeStories.length > 0 && (
+              <button
+                type="button"
+                className="site-hero__story"
+                aria-label={
+                  lang === "sr"
+                    ? "Отвори Живот Бабушке"
+                    : "Open Babuska Life stories"
+                }
+                onClick={() => setStoryViewerIndex(0)}
+              >
+                <span className="site-hero__story-ring">
+                  <img
+                    src={activeStories[0].image}
+                    srcSet={mediaSrcSet(activeStories[0].imageVariants) || undefined}
+                    sizes="72px"
+                    alt=""
+                  />
+                </span>
+                <span>{lang === "sr" ? "Живот Бабушке" : "Babuska Life"}</span>
+              </button>
+            )}
             <a
               href="#menu"
               className="site-hero__cta inline-block px-9 py-3.5 text-[10px] uppercase tracking-[0.26em] transition-all duration-300"
@@ -2540,6 +2571,14 @@ function LandingPage() {
               </button>
             </div>
           </div>
+        )}
+        {storyViewerIndex !== null && activeStories.length > 0 && (
+          <StoryViewer
+            stories={activeStories}
+            initialIndex={storyViewerIndex}
+            language={lang}
+            onClose={() => setStoryViewerIndex(null)}
+          />
         )}
       </div>
     </LangContext.Provider>

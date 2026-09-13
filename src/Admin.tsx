@@ -10,6 +10,7 @@ import {
 import type {
   AdminGalleryItem,
   AdminMenuItem,
+  AdminStoryItem,
   MenuCategory,
   SiteSettings,
 } from "./lib/content";
@@ -307,10 +308,11 @@ export default function Admin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [feedback, setFeedback] = useState<Feedback>(null);
-  const [tab, setTab] = useState<AdminTab>("content");
+  const [tab, setTab] = useState<AdminTab>("stories");
   const [items, setItems] = useState<AdminMenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [galleryItems, setGalleryItems] = useState<AdminGalleryItem[]>([]);
+  const [stories, setStories] = useState<AdminStoryItem[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(emptySettings);
   const [savedHeroPath, setSavedHeroPath] = useState("");
   const [draft, setDraft] = useState<AdminMenuItem>(emptyItem);
@@ -347,11 +349,13 @@ export default function Admin() {
           ...galleryItems.flatMap((item) =>
             mediaVariantPaths(item.imageVariants),
           ),
+          ...stories.map((item) => item.storagePath),
+          ...stories.flatMap((item) => mediaVariantPaths(item.imageVariants)),
           savedHeroPath,
           ...mediaVariantPaths(settings.heroImageVariants),
         ].filter(Boolean),
       ),
-    [items, galleryItems, savedHeroPath, settings.heroImageVariants],
+    [items, galleryItems, stories, savedHeroPath, settings.heroImageVariants],
   );
   const discardPending = async (
     path: string,
@@ -365,7 +369,7 @@ export default function Admin() {
   };
 
   const load = async () => {
-    const [categoriesResult, itemsResult, galleryResult, settingsResult] =
+    const [categoriesResult, itemsResult, galleryResult, storiesResult, settingsResult] =
       await Promise.all([
         supabase
           .from("menu_categories")
@@ -383,12 +387,19 @@ export default function Admin() {
             "id, image_url, storage_path, image_variants, alt_sr, alt_en, is_published, sort_order",
           )
           .order("sort_order"),
+        supabase
+          .from("story_items")
+          .select(
+            "id, image_url, storage_path, image_variants, sort_order, is_published, published_at, expires_at",
+          )
+          .order("published_at", { ascending: false }),
         supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
       ]);
     const error =
       categoriesResult.error ??
       itemsResult.error ??
       galleryResult.error ??
+      storiesResult.error ??
       settingsResult.error;
     if (error) {
       notice(error.message, "error");
@@ -427,6 +438,18 @@ export default function Admin() {
         altEn: item.alt_en,
         isPublished: item.is_published,
         sortOrder: item.sort_order,
+      })),
+    );
+    setStories(
+      (storiesResult.data ?? []).map((story) => ({
+        id: story.id,
+        image: story.image_url,
+        storagePath: story.storage_path,
+        imageVariants: parseMediaVariants(story.image_variants),
+        sortOrder: story.sort_order,
+        isPublished: story.is_published,
+        publishedAt: story.published_at,
+        expiresAt: story.expires_at,
       })),
     );
     const nextSettings = settingsFromRow(settingsResult.data);
@@ -539,6 +562,103 @@ export default function Admin() {
     } finally {
       setUploading(null);
     }
+  };
+
+  const uploadStories = async (files: FileList) => {
+    const selected = Array.from(files);
+    if (!selected.length) return;
+    setUploading("stories");
+    setFeedback(null);
+    const failures: string[] = [];
+    let uploaded = 0;
+    for (const file of selected) {
+      try {
+        const media = await uploadImage(file, "stories");
+        const now = new Date();
+        const { error } = await supabase.from("story_items").insert({
+          image_url: media.url,
+          storage_path: media.path,
+          image_variants: media.variants,
+          sort_order: 0,
+          is_published: true,
+          published_at: now.toISOString(),
+          expires_at: new Date(now.getTime() + 86_400_000).toISOString(),
+        });
+        if (error) {
+          await removeUploadedImage([
+            media.path,
+            ...mediaVariantPaths(media.variants),
+          ]).catch(() => undefined);
+          throw error;
+        }
+        uploaded += 1;
+      } catch (error) {
+        failures.push(
+          `${file.name}: ${
+            error instanceof Error
+              ? error.message
+              : tr("пренос није успио", "upload failed")
+          }`,
+        );
+      }
+    }
+    setUploading(null);
+    await load();
+    if (failures.length) {
+      notice(failures.join("\n"), "error");
+      return;
+    }
+    notice(
+      tr(
+        uploaded === 1 ? "Прича је објављена на 24 часа." : `Објављено је ${uploaded} прича на 24 часа.`,
+        uploaded === 1 ? "Story published for 24 hours." : `${uploaded} stories published for 24 hours.`,
+      ),
+      "success",
+    );
+  };
+
+  const republishStory = async (story: AdminStoryItem) => {
+    const now = new Date();
+    const { error } = await supabase
+      .from("story_items")
+      .update({
+        is_published: true,
+        published_at: now.toISOString(),
+        expires_at: new Date(now.getTime() + 86_400_000).toISOString(),
+      })
+      .eq("id", story.id);
+    if (error) notice(error.message, "error");
+    else {
+      notice(tr("Прича је поново објављена.", "Story republished."), "success");
+      await load();
+    }
+  };
+
+  const removeStory = async (story: AdminStoryItem) => {
+    if (!window.confirm(tr("Избрисати ову причу?", "Delete this story?")))
+      return;
+    const { error } = await supabase
+      .from("story_items")
+      .delete()
+      .eq("id", story.id);
+    if (error) {
+      notice(error.message, "error");
+      return;
+    }
+    await removeUploadedImage([
+      story.storagePath,
+      ...mediaVariantPaths(story.imageVariants),
+    ]).catch(() =>
+      notice(
+        tr(
+          "Прича је избрисана, али слика није уклоњена.",
+          "Story deleted, but its image could not be removed.",
+        ),
+        "error",
+      ),
+    );
+    notice(tr("Прича је избрисана.", "Story deleted."), "success");
+    await load();
   };
 
   const saveCategory = async (event: React.FormEvent) => {
@@ -1027,6 +1147,91 @@ export default function Admin() {
           <div className="admin-status" data-tone={feedback.tone} role="status">
             {feedback.text}
           </div>
+        )}
+
+        {tab === "stories" && (
+          <>
+            <section className="admin-panel admin-panel--narrow">
+              <div className="admin-panel__heading">
+                <div>
+                  <h2>{tr("Нова прича", "New story")}</h2>
+                  <p>
+                    {tr(
+                      "Одаберите једну или више слика. Свака ће на почетној страници бити видљива 24 часа.",
+                      "Choose one or more photos. Each will be visible on the homepage for 24 hours.",
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div className="admin-media-upload">
+                <label className="admin-media-upload__trigger">
+                  <span>
+                    {uploading === "stories"
+                      ? tr("Слике се преносе…", "Uploading images…")
+                      : tr("Одаберите слике са рачунара", "Choose photos from computer")}
+                  </span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    disabled={uploading === "stories"}
+                    onChange={(event) => {
+                      const files = event.currentTarget.files;
+                      event.currentTarget.value = "";
+                      if (files?.length) void uploadStories(files);
+                    }}
+                  />
+                </label>
+                <small>
+                  {tr(
+                    "JPEG, PNG, WebP или AVIF · највише 10 MB по слици · без ограничења броја слика",
+                    "JPEG, PNG, WebP or AVIF · up to 10 MB per image · no photo limit",
+                  )}
+                </small>
+              </div>
+            </section>
+            <RecordSection
+              title={tr("Објављене и истекле приче", "Published and expired stories")}
+              empty={tr("Још нема објављених прича.", "No stories have been published yet.")}
+            >
+              {stories.map((story) => {
+                const isActive =
+                  story.isPublished && Date.parse(story.expiresAt) > Date.now();
+                return (
+                  <div className="admin-record" key={story.id}>
+                    <img className="admin-record__image" src={story.image} alt="" />
+                    <div className="admin-record__content">
+                      <strong className="admin-record__title">
+                        {isActive
+                          ? tr("Видљиво на почетној страници", "Visible on the homepage")
+                          : tr("Истекло или скривено", "Expired or hidden")}
+                      </strong>
+                      <div className="admin-record__meta">
+                        {tr("Истиче", "Expires")}: {new Intl.DateTimeFormat(
+                          uiLanguage === "sr" ? "sr-Cyrl-BA" : "en-GB",
+                          { dateStyle: "medium", timeStyle: "short" },
+                        ).format(new Date(story.expiresAt))}
+                      </div>
+                    </div>
+                    <div className="admin-record__actions">
+                      <button
+                        className="admin-button admin-button--secondary"
+                        onClick={() => void republishStory(story)}
+                      >
+                        {tr("Објави поново", "Republish")}
+                      </button>
+                      <button
+                        className="admin-button admin-button--danger"
+                        onClick={() => void removeStory(story)}
+                      >
+                        {tr("Избриши", "Delete")}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </RecordSection>
+          </>
         )}
 
         {tab === "content" && (

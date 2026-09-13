@@ -1,4 +1,4 @@
-export type MediaFolder = "hero" | "menu" | "gallery";
+export type MediaFolder = "hero" | "menu" | "gallery" | "stories";
 
 export type MediaVariant = {
   path: string;
@@ -12,6 +12,7 @@ export const MEDIA_VARIANT_WIDTHS: Record<MediaFolder, readonly number[]> = {
   hero: [640, 1280, 1920],
   menu: [480, 960],
   gallery: [640, 1280, 1920],
+  stories: [480, 960, 1440],
 };
 
 export function deriveVariantWidths(

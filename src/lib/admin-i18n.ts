@@ -9,6 +9,18 @@ export function adminText(
 }
 
 export const ADMIN_TABS = {
+  stories: {
+    sr: [
+      "Живот Бабушке",
+      "Живот Бабушке",
+      "Објавите тренутке из кафића који се на почетној страници приказују 24 часа.",
+    ],
+    en: [
+      "Babuska Life",
+      "Babuska Life",
+      "Publish café moments that appear on the homepage for 24 hours.",
+    ],
+  },
   content: {
     sr: [
       "Садржај",

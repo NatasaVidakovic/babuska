@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   PUBLIC_CONTENT_CACHE_KEY,
   fetchPublicContent,
+  normalizePublicContent,
   readPublicContentCache,
   writePublicContentCache,
   type PublicContentSnapshot,
@@ -40,6 +41,17 @@ const rawBootstrap = {
     },
   ],
   gallery: [],
+  stories: [
+    {
+      id: "story-current",
+      image_url: "https://cdn.test/story.webp",
+      storage_path: "stories/story-current/original.jpg",
+      image_variants: {},
+      sort_order: 0,
+      published_at: "2099-01-02T00:00:00.000Z",
+      expires_at: "2099-01-03T00:00:00.000Z",
+    },
+  ],
 };
 
 describe("public content bootstrap", () => {
@@ -72,6 +84,7 @@ describe("public content bootstrap", () => {
     expect(result.items[0]?.factSr).toBe("");
     expect(result.items[0]?.factEn).toBe("");
     expect(result.settings.heroImageVariants["640"]?.width).toBe(640);
+    expect(result.stories[0]?.id).toBe("story-current");
   });
 
   it("ignores malformed and old cache records", () => {
@@ -90,11 +103,42 @@ describe("public content bootstrap", () => {
     values.set(
       PUBLIC_CONTENT_CACHE_KEY,
       JSON.stringify({
-        version: 2,
+        version: 3,
         data: { settings: {}, categories: [], items: [], gallery: [] },
       }),
     );
     expect(readPublicContentCache(storage)).toBeNull();
+  });
+
+  it("keeps only active, well-formed stories in newest-first order", () => {
+    const snapshot = normalizePublicContent({
+      ...rawBootstrap,
+      stories: [
+        ...rawBootstrap.stories,
+        {
+          id: "story-newest",
+          image_url: "https://cdn.test/newest.webp",
+          storage_path: "stories/newest/original.jpg",
+          image_variants: {},
+          published_at: "2099-01-03T00:00:00.000Z",
+          expires_at: "2099-01-04T00:00:00.000Z",
+        },
+        {
+          id: "story-expired",
+          image_url: "https://cdn.test/old.webp",
+          storage_path: "stories/old/original.jpg",
+          image_variants: {},
+          published_at: "2020-01-01T00:00:00.000Z",
+          expires_at: "2020-01-02T00:00:00.000Z",
+        },
+        { id: "missing-image", expires_at: "2099-01-04T00:00:00.000Z" },
+      ],
+    });
+
+    expect(snapshot.stories.map((story) => story.id)).toEqual([
+      "story-newest",
+      "story-current",
+    ]);
   });
 
   it("round-trips a versioned normalized cache", async () => {

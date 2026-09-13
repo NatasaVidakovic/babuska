@@ -35,6 +35,17 @@ export type AdminGalleryItem = {
   isPublished: boolean;
 };
 
+export type AdminStoryItem = {
+  id: string;
+  image: string;
+  storagePath: string;
+  imageVariants: MediaVariants;
+  sortOrder: number;
+  isPublished: boolean;
+  publishedAt: string;
+  expiresAt: string;
+};
+
 export type SiteSettings = {
   instagram: string;
   facebook: string;
