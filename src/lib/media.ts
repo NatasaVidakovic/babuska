@@ -16,7 +16,21 @@ const MIME_EXTENSIONS: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
   "image/avif": "avif",
+  "image/heic": "heic",
+  "image/heif": "heif",
 };
+const EXTENSION_MIMES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  avif: "image/avif",
+  heic: "image/heic",
+  heif: "image/heif",
+};
+const INFERABLE_MIME_TYPES = new Set(["", "application/octet-stream"]);
+
+export const IMAGE_PICKER_ACCEPT = "image/*,.heic,.heif";
 
 export type { MediaFolder } from "./media-variants";
 export type UploadedMedia = {
@@ -30,11 +44,41 @@ export type MediaUploadPlan = {
   variants: PlannedVariant[];
 };
 
-export function validateImage(file: File) {
-  if (!MIME_EXTENSIONS[file.type])
-    throw new Error("Дозвољени су JPEG, PNG, WebP и AVIF формати.");
+export type ImageFileFormat = {
+  extension: string;
+  mimeType: string;
+};
+
+export function resolveImageFileFormat(
+  file: Pick<File, "name" | "type">,
+): ImageFileFormat | null {
+  const declaredMimeType = file.type.trim().toLowerCase();
+  const declaredExtension = MIME_EXTENSIONS[declaredMimeType];
+  if (declaredExtension) {
+    return { extension: declaredExtension, mimeType: declaredMimeType };
+  }
+
+  if (!INFERABLE_MIME_TYPES.has(declaredMimeType)) return null;
+  const filenameExtension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const inferredMimeType = EXTENSION_MIMES[filenameExtension];
+  if (!inferredMimeType) return null;
+  return {
+    extension: filenameExtension === "jpeg" ? "jpg" : filenameExtension,
+    mimeType: inferredMimeType,
+  };
+}
+
+export function snapshotSelectedFiles(files: FileList | null): File[] {
+  return files ? Array.from(files) : [];
+}
+
+export function validateImage(file: File): ImageFileFormat {
+  const format = resolveImageFileFormat(file);
+  if (!format)
+    throw new Error("Дозвољени су JPEG, PNG, WebP, AVIF, HEIC и HEIF формати.");
   if (file.size > MAX_IMAGE_SIZE)
     throw new Error("Слика може имати највише 10 MB.");
+  return format;
 }
 
 export function createMediaUploadPlan(
@@ -139,8 +183,7 @@ export async function uploadImage(
   file: File,
   folder: MediaFolder,
 ): Promise<UploadedMedia> {
-  validateImage(file);
-  const extension = MIME_EXTENSIONS[file.type];
+  const { extension, mimeType } = validateImage(file);
   const decoded = await decodeImage(file).catch(() => {
     throw new Error("Слика се не може прочитати. Покушајте други формат.");
   });
@@ -182,7 +225,7 @@ export async function uploadImage(
     const { error: originalError } = await supabase.storage
       .from(BUCKET)
       .upload(plan.originalPath, file, {
-        contentType: file.type,
+        contentType: mimeType,
         cacheControl: "31536000",
         upsert: false,
       });

@@ -15,8 +15,10 @@ import type {
   SiteSettings,
 } from "./lib/content";
 import {
+  IMAGE_PICKER_ACCEPT,
   removableMediaPaths,
   removeUploadedImage,
+  snapshotSelectedFiles,
   uploadImage,
   type MediaFolder,
 } from "./lib/media";
@@ -191,11 +193,11 @@ function MediaUpload({
             ? tr("Слика се преноси…", "Uploading image…")
             : value
               ? tr("Замијени слику", "Replace image")
-              : tr("Одабери слику са рачунара", "Choose image from computer")}
+              : tr("Одабери слику са уређаја", "Choose image from device")}
         </span>
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
+          accept={IMAGE_PICKER_ACCEPT}
           disabled={busy}
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
@@ -206,8 +208,8 @@ function MediaUpload({
       </label>
       <small>
         {tr(
-          "JPEG, PNG, WebP или AVIF · највише 10 MB",
-          "JPEG, PNG, WebP or AVIF · up to 10 MB",
+          "JPEG, PNG, WebP, AVIF, HEIC или HEIF · највише 10 MB",
+          "JPEG, PNG, WebP, AVIF, HEIC or HEIF · up to 10 MB",
         )}
       </small>
     </div>
@@ -564,8 +566,7 @@ export default function Admin() {
     }
   };
 
-  const uploadStories = async (files: FileList) => {
-    const selected = Array.from(files);
+  const uploadStories = async (selected: readonly File[]) => {
     if (!selected.length) return;
     setUploading("stories");
     setFeedback(null);
@@ -1168,24 +1169,26 @@ export default function Admin() {
                   <span>
                     {uploading === "stories"
                       ? tr("Слике се преносе…", "Uploading images…")
-                      : tr("Одаберите слике са рачунара", "Choose photos from computer")}
+                      : tr("Одаберите слике са уређаја", "Choose photos from device")}
                   </span>
                   <input
                     type="file"
                     multiple
-                    accept="image/jpeg,image/png,image/webp,image/avif"
+                    accept={IMAGE_PICKER_ACCEPT}
                     disabled={uploading === "stories"}
                     onChange={(event) => {
-                      const files = event.currentTarget.files;
+                      const files = snapshotSelectedFiles(
+                        event.currentTarget.files,
+                      );
                       event.currentTarget.value = "";
-                      if (files?.length) void uploadStories(files);
+                      if (files.length) void uploadStories(files);
                     }}
                   />
                 </label>
                 <small>
                   {tr(
-                    "JPEG, PNG, WebP или AVIF · највише 10 MB по слици · без ограничења броја слика",
-                    "JPEG, PNG, WebP or AVIF · up to 10 MB per image · no photo limit",
+                    "JPEG, PNG, WebP, AVIF, HEIC или HEIF · највише 10 MB по слици · без ограничења броја слика",
+                    "JPEG, PNG, WebP, AVIF, HEIC or HEIF · up to 10 MB per image · no photo limit",
                   )}
                 </small>
               </div>

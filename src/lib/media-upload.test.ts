@@ -3,18 +3,57 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./supabase", () => ({ supabase: {} }));
 import {
   createMediaUploadPlan,
+  IMAGE_PICKER_ACCEPT,
   removableMediaPaths,
+  resolveImageFileFormat,
+  snapshotSelectedFiles,
   validateImage,
 } from "./media";
 
-const imageFile = (type: string, size = 1024) =>
-  ({ type, size } as File);
+const imageFile = (type: string, size = 1024, name = "photo.jpg") =>
+  ({ name, type, size } as File);
 
 describe("media upload planning", () => {
   it.each(["image/jpeg", "image/png", "image/webp", "image/avif"])(
     "accepts %s files",
     (type) => expect(() => validateImage(imageFile(type))).not.toThrow(),
   );
+
+  it.each([
+    ["image/heic", "photo.heic"],
+    ["image/heif", "photo.heif"],
+    ["", "photo.heic"],
+    ["application/octet-stream", "photo.heif"],
+  ])("accepts mobile photo %s named %s", (type, name) => {
+    expect(() => validateImage(imageFile(type, 1024, name))).not.toThrow();
+  });
+
+  it("offers the native mobile gallery and explicit Apple photo extensions", () => {
+    expect(IMAGE_PICKER_ACCEPT).toContain("image/*");
+    expect(IMAGE_PICKER_ACCEPT).toContain(".heic");
+    expect(IMAGE_PICKER_ACCEPT).toContain(".heif");
+  });
+
+  it("infers the actual image format when a phone omits its MIME type", () => {
+    expect(resolveImageFileFormat(imageFile("", 1024, "IMG_0001.HEIC"))).toEqual({
+      extension: "heic",
+      mimeType: "image/heic",
+    });
+  });
+
+  it("snapshots story files before the mobile picker is cleared", () => {
+    const first = imageFile("image/jpeg", 1024, "first.jpg");
+    const second = imageFile("image/heic", 1024, "second.heic");
+    const liveSelection = {
+      0: first,
+      1: second,
+      length: 2,
+      item: (index: number) => [first, second][index] ?? null,
+      [Symbol.iterator]: () => [first, second][Symbol.iterator](),
+    } as FileList;
+
+    expect(snapshotSelectedFiles(liveSelection)).toEqual([first, second]);
+  });
 
   it("rejects unsupported and oversized files", () => {
     expect(() => validateImage(imageFile("image/gif"))).toThrow();
