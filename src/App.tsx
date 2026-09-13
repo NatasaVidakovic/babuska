@@ -29,6 +29,7 @@ import {
 } from "./lib/public-content";
 import { getHeroLoadState } from "./lib/hero-loader";
 import { mediaSrcSet } from "./lib/media-variants";
+import { categoryIconKind } from "./lib/category-icons";
 
 const Admin = React.lazy(() => import("./Admin"));
 
@@ -139,6 +140,84 @@ const T = {
       Osvježenje: "Refreshment",
     } as Record<string, string>,
   },
+  ru: {
+    nav: ["Меню", "Галерея", "Как нас найти"],
+    nav_ids: ["menu", "gallery", "visit"],
+    hero_sub_label: "Наше предложение",
+    hero_title: "Вкус Москвы в Баня-Луке",
+    hero_sub:
+      "Авторские напитки, изысканные чаи и русское гостеприимство — с тихим, душевным теплом.",
+    hero_cta: "Открыть меню",
+    menu_overline: "Наше предложение",
+    menu_heading: "Откройте новые вкусы",
+    menu_hint: "Откройте карточку, чтобы прочитать историю, и ещё раз — чтобы увидеть фотографию",
+    book_overline: "Полное предложение",
+    book_heading: "Меню",
+    book_hint: "Листайте меню как настоящую книгу",
+    book_running_head: "Кафе Бабушка",
+    book_prev: "Назад",
+    book_next: "Далее",
+    gallery_overline: "Атмосфера",
+    gallery_heading: "Наше кафе",
+    footer_addr_heading: "Адрес",
+    footer_addr_1: "Господская улица, 14",
+    footer_addr_2: "78000 Баня-Лука",
+    footer_addr_3: "Босния и Герцеговина",
+    footer_hours_heading: "Часы работы",
+    footer_h1: "Пн – Пт: 08:00 – 23:00",
+    footer_h2: "Суббота: 09:00 – 00:00",
+    footer_h3: "Воскресенье: 09:00 – 22:00",
+    footer_contact_heading: "Контакты",
+    footer_copyright: `© ${new Date().getFullYear()} Кафе Бабушка · Баня-Лука`,
+    cat_all: "Все",
+    cat_espresso: "Эспрессо",
+    cat_specialty: "Авторские",
+    cat_tea: "Чай",
+    cat_cold: "Холодные",
+    cat_cocoa: "Какао",
+    book_cat: {
+      Espresso: "Эспрессо",
+      Signature: "Авторские",
+      Čaj: "Чай",
+      Hladno: "Холодные",
+      Kakao: "Какао",
+      Ekskluzivno: "Эксклюзивные",
+      Osvježenje: "Освежающие",
+    } as Record<string, string>,
+  },
+} as const;
+
+const PUBLIC_COPY = {
+  sr: {
+    home: "Кафе Бабушка — почетна",
+    openNav: "Отвори навигацију",
+    closeNav: "Затвори навигацију",
+    heroAlt: "Поглед на Москву",
+    heroLoading: "Учитавање почетне слике",
+    openStories: "Отвори Живот Бабушке",
+    stories: "Живот Бабушке",
+    language: "Српски језик, ћирилица",
+  },
+  en: {
+    home: "Café Babuska — home",
+    openNav: "Open navigation",
+    closeNav: "Close navigation",
+    heroAlt: "View of Moscow",
+    heroLoading: "Loading the hero image",
+    openStories: "Open Babuska Life stories",
+    stories: "Babuska Life",
+    language: "English language",
+  },
+  ru: {
+    home: "Кафе Бабушка — главная",
+    openNav: "Открыть навигацию",
+    closeNav: "Закрыть навигацию",
+    heroAlt: "Вид на Москву",
+    heroLoading: "Загрузка главного изображения",
+    openStories: "Открыть истории «Жизнь Бабушки»",
+    stories: "Жизнь Бабушки",
+    language: "Русский язык",
+  },
 } as const;
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -158,44 +237,6 @@ interface MenuItem {
   imageSrcSet: string;
   ingredients: string;
   fact: string;
-}
-
-type CategoryIconKind =
-  | "coffee"
-  | "tea"
-  | "wine"
-  | "cocktail"
-  | "juice"
-  | "water"
-  | "beer"
-  | "cider"
-  | "gelato"
-  | "rakija"
-  | "spirits";
-
-function categoryIconKind(category: string): CategoryIconKind {
-  const name = category.toLocaleLowerCase();
-  if (/(коктел|cocktail)/.test(name)) return "cocktail";
-  if (/(вод[аеоиу]|water)/.test(name)) return "water";
-  if (/(сок|juice|хладн|cold)/.test(name)) return "juice";
-  if (/(цидер|сајдер|cider)/.test(name)) return "cider";
-  if (/(сладолед|гелато|gelato|ice cream)/.test(name)) return "gelato";
-  if (/(пиво|beer)/.test(name)) return "beer";
-  if (/(чај|tea|инфуз|infusion)/.test(name)) return "tea";
-  if (/(ракиј|schnapps)/.test(name)) return "rakija";
-  if (
-    /(ликер|liqueur|виски|whiskey|bourbon|водка|vodka|текила|tequila|џин|gin|рум|rum|жесток|spirit)/.test(
-      name,
-    )
-  )
-    return "spirits";
-  if (
-    /(вино|вина|wine)/.test(
-      name,
-    )
-  )
-    return "wine";
-  return "coffee";
 }
 
 function CategoryFallbackIcon({ category }: { category: string }) {
@@ -302,6 +343,13 @@ function CategoryFallbackIcon({ category }: { category: string }) {
           <path d="m8.7 9.3 2.4 2.4-2.1 2.1-2.1-2.1 1.8-1.8ZM13.2 10.2l2.3 2.3-2.1 2.1-2.1-2.1 1.9-1.9Z" opacity="0.88" />
         </>
       )}
+      {kind === "glass" && (
+        <>
+          <path d="M6.7 5.2h10.6l-1 12.2a1.8 1.8 0 0 1-1.8 1.6h-5a1.8 1.8 0 0 1-1.8-1.6L6.7 5.2Z" />
+          <path d="M7.3 12h9.4" />
+          <path d="M7.5 14.2h9l-.25 3.1a1.7 1.7 0 0 1-1.7 1.5h-5.1a1.7 1.7 0 0 1-1.7-1.5l-.25-3.1Z" fill="currentColor" stroke="none" opacity="0.14" />
+        </>
+      )}
     </svg>
   );
 }
@@ -371,26 +419,31 @@ const galleryImages = [
     src: "https://images.unsplash.com/photo-1493770348161-369560ae357d?w=900&h=700&fit=crop&auto=format",
     altSr: "Унутрашњост кафеа",
     altEn: "Café interior",
+    altRu: "Интерьер кафе",
   },
   {
     src: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&h=500&fit=crop&auto=format",
     altSr: "Сто у кафеу",
     altEn: "Café table",
+    altRu: "Столик в кафе",
   },
   {
     src: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&h=500&fit=crop&auto=format",
     altSr: "Детаљ кафе",
     altEn: "Coffee detail",
+    altRu: "Кофейная деталь",
   },
   {
     src: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&h=500&fit=crop&auto=format",
     altSr: "Топла атмосфера",
     altEn: "Warm atmosphere",
+    altRu: "Тёплая атмосфера",
   },
   {
     src: "https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=600&h=500&fit=crop&auto=format",
     altSr: "Кутак у кафеу",
     altEn: "Café corner",
+    altRu: "Уголок кафе",
   },
 ];
 
@@ -636,10 +689,69 @@ const bookNamesSr: Record<string, string> = {
   "Ginger Lemon Fizz": "Лимунада са ђумбиром",
 };
 
+const bookNamesRu: Record<string, string> = {
+  Espresso: "Эспрессо",
+  Doppio: "Доппио",
+  Ristretto: "Ристретто",
+  Lungo: "Лунго",
+  Americano: "Американо",
+  Cappuccino: "Капучино",
+  "Caffè Latte": "Кофе латте",
+  "Flat White": "Флэт уайт",
+  Macchiato: "Макиато",
+  Cortado: "Кортадо",
+  "Moscow Raf": "Московский раф",
+  "Pine Nut Latte": "Латте с кедровым орехом",
+  "Spiced Mocha": "Пряный мокко",
+  "Rose Cardamom Latte": "Латте с розой и кардамоном",
+  "Honey Cinnamon Latte": "Латте с мёдом и корицей",
+  "Lavender Fog": "Лавандовый туман",
+  "Salted Caramel Raf": "Раф с солёной карамелью",
+  "Vienna Coffee": "Кофе по-венски",
+  "Pistachio Raf": "Фисташковый раф",
+  "Tsarina's Latte": "Латте «Царица»",
+  "Imperial Black Tea": "Императорский чёрный чай",
+  "Samovar Chai": "Самоварный чай",
+  "Siberian Berry Tea": "Сибирский ягодный чай",
+  "Jasmine Green": "Зелёный чай с жасмином",
+  "Camomile & Honey": "Ромашка с мёдом",
+  "Crimson Berry Infusion": "Настой красных ягод",
+  "Mint Sencha": "Сенча с мятой",
+  "White Peony": "Белый пион",
+  "Rose Hip & Ginger": "Шиповник с имбирём",
+  "Earl Grey Royal": "Королевский эрл грей",
+  "Cold Brew": "Колд брю",
+  "Iced Raf": "Холодный раф",
+  "Iced Lavender Latte": "Холодный лавандовый латте",
+  "Matcha Lemonade": "Лимонад с матча",
+  "Sparkling Elderflower": "Газированный напиток с бузиной",
+  "Cold Brew Tonic": "Колд брю с тоником",
+  "Iced Matcha": "Холодная матча",
+  "Watermelon Mint": "Арбуз с мятой",
+  "Yuzu Lemonade": "Лимонад с юдзу",
+  "Cold Brew Float": "Колд брю с мороженым",
+  "Dark Chocolate Pot": "Горячий тёмный шоколад",
+  "White Choco Raspberry": "Белый шоколад с малиной",
+  "Golden Milk": "Золотое молоко",
+  "Aztec Spiced Cacao": "Пряное какао по-ацтекски",
+  "Praline Velvet": "Бархатное пралине",
+  "Babuška Special": "Фирменный напиток «Бабушка»",
+  "Tsar's Blend": "Царская смесь",
+  "Kremlin Elixir": "Кремлёвский эликсир",
+  "Saffron Raf": "Раф с шафраном",
+  "Fresh Lemonade": "Свежий лимонад",
+  "Ginger Lemon Fizz": "Имбирно-лимонный физз",
+};
+
 function BookItem({ item }: { item: BookDrink }) {
   const lang = React.useContext(LangContext);
   const catLabel = T[lang].book_cat[item.category] ?? item.category;
-  const name = lang === "sr" ? (bookNamesSr[item.name] ?? item.name) : item.name;
+  const name =
+    lang === "sr"
+      ? (bookNamesSr[item.name] ?? item.name)
+      : lang === "ru"
+        ? (bookNamesRu[item.name] ?? bookNamesSr[item.name] ?? item.name)
+        : item.name;
   return (
     <div
       data-book-item
@@ -1578,7 +1690,9 @@ function LandingPage() {
   const [storyViewerIndex, setStoryViewerIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    document.documentElement.lang = lang === "sr" ? "sr-Cyrl" : "en";
+    document.documentElement.lang = { sr: "sr-Cyrl", en: "en", ru: "ru" }[
+      lang
+    ];
   }, [lang]);
 
   useEffect(() => {
@@ -1667,59 +1781,49 @@ function LandingPage() {
     [localizedItems, localizedCategories],
   );
   const bookMenuDrinks = publicSupabaseConfig ? dynamicBookDrinks : bookDrinks;
+  const settingText = (
+    sr: string,
+    en: string,
+    ru: string,
+    fallback: string,
+  ) => localizedText(sr, en, ru, lang) ?? fallback;
   const pageContent = {
     heroTitle:
-      lang === "sr"
-        ? siteSettings.heroTitleSr || t.hero_title
-        : siteSettings.heroTitleEn || t.hero_title,
+      settingText(
+        siteSettings.heroTitleSr,
+        siteSettings.heroTitleEn,
+        siteSettings.heroTitleRu,
+        t.hero_title,
+      ),
     heroDescription:
-      lang === "sr"
-        ? siteSettings.heroDescriptionSr || t.hero_sub
-        : siteSettings.heroDescriptionEn || t.hero_sub,
+      settingText(
+        siteSettings.heroDescriptionSr,
+        siteSettings.heroDescriptionEn,
+        siteSettings.heroDescriptionRu,
+        t.hero_sub,
+      ),
     heroCta:
-      lang === "sr"
-        ? siteSettings.heroCtaSr || t.hero_cta
-        : siteSettings.heroCtaEn || t.hero_cta,
+      settingText(siteSettings.heroCtaSr, siteSettings.heroCtaEn, siteSettings.heroCtaRu, t.hero_cta),
     footerAddressHeading:
-      lang === "sr"
-        ? siteSettings.footerAddressHeadingSr || t.footer_addr_heading
-        : siteSettings.footerAddressHeadingEn || t.footer_addr_heading,
+      settingText(siteSettings.footerAddressHeadingSr, siteSettings.footerAddressHeadingEn, siteSettings.footerAddressHeadingRu, t.footer_addr_heading),
     footerAddressLine1:
-      lang === "sr"
-        ? siteSettings.footerAddressLine1Sr || t.footer_addr_1
-        : siteSettings.footerAddressLine1En || t.footer_addr_1,
+      settingText(siteSettings.footerAddressLine1Sr, siteSettings.footerAddressLine1En, siteSettings.footerAddressLine1Ru, t.footer_addr_1),
     footerAddressLine2:
-      lang === "sr"
-        ? siteSettings.footerAddressLine2Sr || t.footer_addr_2
-        : siteSettings.footerAddressLine2En || t.footer_addr_2,
+      settingText(siteSettings.footerAddressLine2Sr, siteSettings.footerAddressLine2En, siteSettings.footerAddressLine2Ru, t.footer_addr_2),
     footerAddressLine3:
-      lang === "sr"
-        ? siteSettings.footerAddressLine3Sr || t.footer_addr_3
-        : siteSettings.footerAddressLine3En || t.footer_addr_3,
+      settingText(siteSettings.footerAddressLine3Sr, siteSettings.footerAddressLine3En, siteSettings.footerAddressLine3Ru, t.footer_addr_3),
     footerHoursHeading:
-      lang === "sr"
-        ? siteSettings.footerHoursHeadingSr || t.footer_hours_heading
-        : siteSettings.footerHoursHeadingEn || t.footer_hours_heading,
+      settingText(siteSettings.footerHoursHeadingSr, siteSettings.footerHoursHeadingEn, siteSettings.footerHoursHeadingRu, t.footer_hours_heading),
     footerHoursLine1:
-      lang === "sr"
-        ? siteSettings.footerHoursLine1Sr || t.footer_h1
-        : siteSettings.footerHoursLine1En || t.footer_h1,
+      settingText(siteSettings.footerHoursLine1Sr, siteSettings.footerHoursLine1En, siteSettings.footerHoursLine1Ru, t.footer_h1),
     footerHoursLine2:
-      lang === "sr"
-        ? siteSettings.footerHoursLine2Sr || t.footer_h2
-        : siteSettings.footerHoursLine2En || t.footer_h2,
+      settingText(siteSettings.footerHoursLine2Sr, siteSettings.footerHoursLine2En, siteSettings.footerHoursLine2Ru, t.footer_h2),
     footerHoursLine3:
-      lang === "sr"
-        ? siteSettings.footerHoursLine3Sr || t.footer_h3
-        : siteSettings.footerHoursLine3En || t.footer_h3,
+      settingText(siteSettings.footerHoursLine3Sr, siteSettings.footerHoursLine3En, siteSettings.footerHoursLine3Ru, t.footer_h3),
     footerContactHeading:
-      lang === "sr"
-        ? siteSettings.footerContactHeadingSr || t.footer_contact_heading
-        : siteSettings.footerContactHeadingEn || t.footer_contact_heading,
+      settingText(siteSettings.footerContactHeadingSr, siteSettings.footerContactHeadingEn, siteSettings.footerContactHeadingRu, t.footer_contact_heading),
     footerCopyright:
-      lang === "sr"
-        ? siteSettings.footerCopyrightSr || t.footer_copyright
-        : siteSettings.footerCopyrightEn || t.footer_copyright,
+      settingText(siteSettings.footerCopyrightSr, siteSettings.footerCopyrightEn, siteSettings.footerCopyrightRu, t.footer_copyright),
     phone: siteSettings.phone || "+387 65 000 000",
     email: siteSettings.email || "hello@cafebabuska.ba",
     socialHandle: siteSettings.socialHandle || "@cafebabuska",
@@ -1730,14 +1834,14 @@ function LandingPage() {
     srcSet?: string;
   }[] = publicSupabaseConfig
     ? adminGalleryItems.flatMap((item) => {
-        const alt = localizedText(item.altSr, item.altEn, lang);
+        const alt = localizedText(item.altSr, item.altEn, item.altRu, lang);
         return item.image && alt
           ? [{ src: item.image, alt, srcSet: mediaSrcSet(item.imageVariants) }]
           : [];
       })
     : galleryImages.map((item) => ({
         src: item.src,
-        alt: localizedText(item.altSr, item.altEn, lang) ?? item.altSr,
+        alt: localizedText(item.altSr, item.altEn, item.altRu, lang) ?? item.altSr,
     }));
   const activeStories = stories.filter(
     (story) => Date.parse(story.expiresAt) > Date.now() && story.isPublished,
@@ -1829,7 +1933,7 @@ function LandingPage() {
   // Language switcher button
   const LangSwitch = () => (
     <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-      {(["sr", "en"] as Lang[]).map((l, i) => (
+      {(["sr", "en", "ru"] as Lang[]).map((l, i) => (
         <React.Fragment key={l}>
           {i > 0 && (
             <span
@@ -1844,9 +1948,7 @@ function LandingPage() {
           )}
           <button
             onClick={() => setLang(l)}
-            aria-label={
-              l === "sr" ? "Српски језик, ћирилица" : "English language"
-            }
+            aria-label={PUBLIC_COPY[l].language}
             style={{
               fontFamily: "Lora, serif",
               fontSize: "10px",
@@ -1861,7 +1963,7 @@ function LandingPage() {
               transition: "color 0.2s",
             }}
           >
-            {l === "sr" ? "СР" : "EN"}
+            {{ sr: "СР", en: "EN", ru: "РУ" }[l]}
           </button>
         </React.Fragment>
       ))}
@@ -1884,9 +1986,7 @@ function LandingPage() {
             <a
               className="site-header__brand"
               href="#top"
-              aria-label={
-                lang === "sr" ? "Кафе Бабушка — почетна" : "Café Babuska — home"
-              }
+              aria-label={PUBLIC_COPY[lang].home}
             >
               <img
                 src={brandLogo}
@@ -1919,12 +2019,8 @@ function LandingPage() {
                 onClick={() => setMobileNavOpen((v) => !v)}
                 aria-label={
                   mobileNavOpen
-                    ? lang === "sr"
-                      ? "Затвори навигацију"
-                      : "Close navigation"
-                    : lang === "sr"
-                      ? "Отвори навигацију"
-                      : "Open navigation"
+                    ? PUBLIC_COPY[lang].closeNav
+                    : PUBLIC_COPY[lang].openNav
                 }
                 aria-expanded={mobileNavOpen}
               >
@@ -2003,7 +2099,7 @@ function LandingPage() {
                   src={heroImage}
                   srcSet={heroSrcSet || undefined}
                   sizes={heroSrcSet ? "100vw" : undefined}
-                  alt={lang === "sr" ? "Поглед на Москву" : "View of Moscow"}
+                  alt={PUBLIC_COPY[lang].heroAlt}
                   className="site-hero__image h-full w-full object-cover"
                   data-ready={heroLoadState === "ready"}
                   fetchPriority="high"
@@ -2058,11 +2154,7 @@ function LandingPage() {
           <div className="site-hero__ornament site-hero__ornament--bottom site-hero__ornament--right hero-loader-slot">
             {heroLoadState === "loading" ? (
               <HeroLoader
-                label={
-                  lang === "sr"
-                    ? "Учитавање почетне слике"
-                    : "Loading the hero image"
-                }
+                label={PUBLIC_COPY[lang].heroLoading}
               />
             ) : (
               <CornerOrnament rotate={180} />
@@ -2103,11 +2195,7 @@ function LandingPage() {
               <button
                 type="button"
                 className="site-hero__story"
-                aria-label={
-                  lang === "sr"
-                    ? "Отвори Живот Бабушке"
-                    : "Open Babuska Life stories"
-                }
+                aria-label={PUBLIC_COPY[lang].openStories}
                 onClick={() => setStoryViewerIndex(0)}
               >
                 <span className="site-hero__story-ring">
@@ -2118,7 +2206,7 @@ function LandingPage() {
                     alt=""
                   />
                 </span>
-                <span>{lang === "sr" ? "Живот Бабушке" : "Babuska Life"}</span>
+                <span>{PUBLIC_COPY[lang].stories}</span>
               </button>
             )}
             <a

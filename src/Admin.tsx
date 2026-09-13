@@ -28,12 +28,14 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 type SessionState = "loading" | "signed-out" | "denied" | "ready";
 type Feedback = { text: string; tone: "success" | "error" } | null;
-type ContentLanguage = "sr" | "en";
+type ContentLanguage = "sr" | "en" | "ru";
+const CONTENT_SUFFIX = { sr: "Sr", en: "En", ru: "Ru" } as const;
 
 const emptyItem: AdminMenuItem = {
   id: "",
   nameSr: "",
   nameEn: "",
+  nameRu: "",
   categoryId: "",
   price: "",
   image: "",
@@ -41,13 +43,16 @@ const emptyItem: AdminMenuItem = {
   imageVariants: {},
   descriptionSr: "",
   descriptionEn: "",
+  descriptionRu: "",
   factSr: "",
   factEn: "",
+  factRu: "",
 };
 const emptyCategory: MenuCategory = {
   id: "",
   nameSr: "",
   nameEn: "",
+  nameRu: "",
   sortOrder: 0,
 };
 const emptyGallery: AdminGalleryItem = {
@@ -57,6 +62,7 @@ const emptyGallery: AdminGalleryItem = {
   imageVariants: {},
   altSr: "",
   altEn: "",
+  altRu: "",
   sortOrder: 0,
   isPublished: true,
 };
@@ -72,30 +78,43 @@ const emptySettings: SiteSettings = {
   heroImageVariants: {},
   heroTitleSr: "",
   heroTitleEn: "",
+  heroTitleRu: "",
   heroDescriptionSr: "",
   heroDescriptionEn: "",
+  heroDescriptionRu: "",
   heroCtaSr: "",
   heroCtaEn: "",
+  heroCtaRu: "",
   footerAddressHeadingSr: "",
   footerAddressHeadingEn: "",
+  footerAddressHeadingRu: "",
   footerAddressLine1Sr: "",
   footerAddressLine1En: "",
+  footerAddressLine1Ru: "",
   footerAddressLine2Sr: "",
   footerAddressLine2En: "",
+  footerAddressLine2Ru: "",
   footerAddressLine3Sr: "",
   footerAddressLine3En: "",
+  footerAddressLine3Ru: "",
   footerHoursHeadingSr: "",
   footerHoursHeadingEn: "",
+  footerHoursHeadingRu: "",
   footerHoursLine1Sr: "",
   footerHoursLine1En: "",
+  footerHoursLine1Ru: "",
   footerHoursLine2Sr: "",
   footerHoursLine2En: "",
+  footerHoursLine2Ru: "",
   footerHoursLine3Sr: "",
   footerHoursLine3En: "",
+  footerHoursLine3Ru: "",
   footerContactHeadingSr: "",
   footerContactHeadingEn: "",
+  footerContactHeadingRu: "",
   footerCopyrightSr: "",
   footerCopyrightEn: "",
+  footerCopyrightRu: "",
 };
 
 function Field({
@@ -141,21 +160,21 @@ function LanguageSwitch({
   value: ContentLanguage;
   onChange: (value: ContentLanguage) => void;
   language: AdminLanguage;
-  completed?: { sr: boolean; en: boolean };
+  completed?: Partial<Record<ContentLanguage, boolean>>;
 }) {
   return (
     <div
       className="admin-language-switch"
       aria-label={adminText(language, "Језик садржаја", "Content language")}
     >
-      {(["sr", "en"] as const).map((option) => (
+      {(["sr", "en", "ru"] as const).map((option) => (
         <button
           key={option}
           type="button"
           aria-pressed={value === option}
           onClick={() => onChange(option)}
         >
-          {option === "sr" ? "СР" : "EN"}
+          {{ sr: "СР", en: "EN", ru: "РУ" }[option]}
           {completed?.[option] ? " ✓" : ""}
         </button>
       ))}
@@ -229,30 +248,43 @@ const settingFields: [TextSettingKey, string][] = [
   ["heroImageStoragePath", "hero_image_storage_path"],
   ["heroTitleSr", "hero_title_sr"],
   ["heroTitleEn", "hero_title_en"],
+  ["heroTitleRu", "hero_title_ru"],
   ["heroDescriptionSr", "hero_description_sr"],
   ["heroDescriptionEn", "hero_description_en"],
+  ["heroDescriptionRu", "hero_description_ru"],
   ["heroCtaSr", "hero_cta_sr"],
   ["heroCtaEn", "hero_cta_en"],
+  ["heroCtaRu", "hero_cta_ru"],
   ["footerAddressHeadingSr", "footer_address_heading_sr"],
   ["footerAddressHeadingEn", "footer_address_heading_en"],
+  ["footerAddressHeadingRu", "footer_address_heading_ru"],
   ["footerAddressLine1Sr", "footer_address_line_1_sr"],
   ["footerAddressLine1En", "footer_address_line_1_en"],
+  ["footerAddressLine1Ru", "footer_address_line_1_ru"],
   ["footerAddressLine2Sr", "footer_address_line_2_sr"],
   ["footerAddressLine2En", "footer_address_line_2_en"],
+  ["footerAddressLine2Ru", "footer_address_line_2_ru"],
   ["footerAddressLine3Sr", "footer_address_line_3_sr"],
   ["footerAddressLine3En", "footer_address_line_3_en"],
+  ["footerAddressLine3Ru", "footer_address_line_3_ru"],
   ["footerHoursHeadingSr", "footer_hours_heading_sr"],
   ["footerHoursHeadingEn", "footer_hours_heading_en"],
+  ["footerHoursHeadingRu", "footer_hours_heading_ru"],
   ["footerHoursLine1Sr", "footer_hours_line_1_sr"],
   ["footerHoursLine1En", "footer_hours_line_1_en"],
+  ["footerHoursLine1Ru", "footer_hours_line_1_ru"],
   ["footerHoursLine2Sr", "footer_hours_line_2_sr"],
   ["footerHoursLine2En", "footer_hours_line_2_en"],
+  ["footerHoursLine2Ru", "footer_hours_line_2_ru"],
   ["footerHoursLine3Sr", "footer_hours_line_3_sr"],
   ["footerHoursLine3En", "footer_hours_line_3_en"],
+  ["footerHoursLine3Ru", "footer_hours_line_3_ru"],
   ["footerContactHeadingSr", "footer_contact_heading_sr"],
   ["footerContactHeadingEn", "footer_contact_heading_en"],
+  ["footerContactHeadingRu", "footer_contact_heading_ru"],
   ["footerCopyrightSr", "footer_copyright_sr"],
   ["footerCopyrightEn", "footer_copyright_en"],
+  ["footerCopyrightRu", "footer_copyright_ru"],
 ];
 
 function settingsFromRow(row: Record<string, unknown> | null): SiteSettings {
@@ -375,18 +407,18 @@ export default function Admin() {
       await Promise.all([
         supabase
           .from("menu_categories")
-          .select("id, name_sr, name_en, sort_order")
+          .select("id, name_sr, name_en, name_ru, sort_order")
           .order("sort_order"),
         supabase
           .from("menu_items")
           .select(
-            "id, name_sr, name_en, category_id, price, image_url, storage_path, image_variants, description_sr, description_en, fact_sr, fact_en",
+            "id, name_sr, name_en, name_ru, category_id, price, image_url, storage_path, image_variants, description_sr, description_en, description_ru, fact_sr, fact_en, fact_ru",
           )
           .order("sort_order"),
         supabase
           .from("gallery_items")
           .select(
-            "id, image_url, storage_path, image_variants, alt_sr, alt_en, is_published, sort_order",
+            "id, image_url, storage_path, image_variants, alt_sr, alt_en, alt_ru, is_published, sort_order",
           )
           .order("sort_order"),
         supabase
@@ -411,6 +443,7 @@ export default function Admin() {
       id: category.id,
       nameSr: category.name_sr ?? "",
       nameEn: category.name_en ?? "",
+      nameRu: category.name_ru ?? "",
       sortOrder: category.sort_order,
     }));
     setCategories(nextCategories);
@@ -419,6 +452,7 @@ export default function Admin() {
         id: item.id,
         nameSr: item.name_sr ?? "",
         nameEn: item.name_en ?? "",
+        nameRu: item.name_ru ?? "",
         categoryId: item.category_id,
         price: item.price,
         image: item.image_url ?? "",
@@ -426,8 +460,10 @@ export default function Admin() {
         imageVariants: parseMediaVariants(item.image_variants),
         descriptionSr: item.description_sr ?? "",
         descriptionEn: item.description_en ?? "",
+        descriptionRu: item.description_ru ?? "",
         factSr: item.fact_sr ?? "",
         factEn: item.fact_en ?? "",
+        factRu: item.fact_ru ?? "",
       })),
     );
     setGalleryItems(
@@ -438,6 +474,7 @@ export default function Admin() {
         imageVariants: parseMediaVariants(item.image_variants),
         altSr: item.alt_sr,
         altEn: item.alt_en,
+        altRu: item.alt_ru ?? "",
         isPublished: item.is_published,
         sortOrder: item.sort_order,
       })),
@@ -666,6 +703,7 @@ export default function Admin() {
     event.preventDefault();
     const nameSr = categoryDraft.nameSr.trim();
     const nameEn = categoryDraft.nameEn.trim();
+    const nameRu = categoryDraft.nameRu.trim();
     if (!nameSr || !nameEn) {
       notice(
         tr(
@@ -681,6 +719,7 @@ export default function Admin() {
       name: nameSr,
       name_sr: nameSr,
       name_en: nameEn,
+      name_ru: nameRu || null,
       sort_order: categoryDraft.sortOrder,
       is_active: true,
     };
@@ -745,6 +784,7 @@ export default function Admin() {
       name: draft.nameSr.trim(),
       name_sr: draft.nameSr.trim(),
       name_en: draft.nameEn.trim(),
+      name_ru: draft.nameRu.trim() || null,
       category_id: draft.categoryId,
       price: draft.price.trim(),
       image_url: draft.image,
@@ -753,9 +793,11 @@ export default function Admin() {
       description: "",
       description_sr: "",
       description_en: "",
+      description_ru: draft.descriptionRu.trim() || null,
       fact: null,
       fact_sr: null,
       fact_en: null,
+      fact_ru: draft.factRu.trim() || null,
       is_published: true,
       ...(editingItem ? {} : { sort_order: items.length }),
     };
@@ -847,6 +889,7 @@ export default function Admin() {
       image_variants: galleryDraft.imageVariants,
       alt_sr: galleryDraft.altSr.trim(),
       alt_en: galleryDraft.altEn.trim(),
+      alt_ru: galleryDraft.altRu.trim() || null,
       is_published: galleryDraft.isPublished,
       sort_order: galleryDraft.sortOrder,
     };
@@ -983,27 +1026,32 @@ export default function Admin() {
     | "footerContactHeading"
     | "footerCopyright";
   const updateLocalizedSetting = (field: LocalizedSetting, value: string) => {
-    const key =
-      `${field}${contentLanguage === "sr" ? "Sr" : "En"}` as keyof SiteSettings;
+    const key = `${field}${CONTENT_SUFFIX[contentLanguage]}` as keyof SiteSettings;
     setSettings((current) => ({ ...current, [key]: value }));
   };
   const logout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
-  const suffix = contentLanguage === "sr" ? "Sr" : "En";
+  const suffix = CONTENT_SUFFIX[contentLanguage];
   const localizedSetting = (field: string) =>
     settings[`${field}${suffix}` as keyof SiteSettings] as string;
   const localizedItemKey = (field: "name" | "description" | "fact") =>
     `${field}${suffix}` as
       | "nameSr"
       | "nameEn"
+      | "nameRu"
       | "descriptionSr"
       | "descriptionEn"
+      | "descriptionRu"
       | "factSr"
-      | "factEn";
-  const localizedCategoryKey = `name${suffix}` as "nameSr" | "nameEn";
-  const localizedGalleryKey = contentLanguage === "sr" ? "altSr" : "altEn";
+      | "factEn"
+      | "factRu";
+  const localizedCategoryKey = `name${suffix}` as
+    | "nameSr"
+    | "nameEn"
+    | "nameRu";
+  const localizedGalleryKey = `alt${suffix}` as "altSr" | "altEn" | "altRu";
 
   if (sessionState === "loading")
     return (
@@ -1490,6 +1538,7 @@ export default function Admin() {
                   completed={{
                     sr: Boolean(categoryDraft.nameSr.trim()),
                     en: Boolean(categoryDraft.nameEn.trim()),
+                    ru: Boolean(categoryDraft.nameRu.trim()),
                   }}
                 />
               </div>
@@ -1497,7 +1546,7 @@ export default function Admin() {
                 <Field label={tr("Назив категорије", "Category name")}>
                   <input
                     className="admin-input"
-                    required
+                    required={contentLanguage !== "ru"}
                     value={categoryDraft[localizedCategoryKey]}
                     onChange={(event) =>
                       setCategoryDraft({
@@ -1551,9 +1600,7 @@ export default function Admin() {
                 <div className="admin-record" key={category.id}>
                   <div className="admin-record__content">
                     <strong className="admin-record__title">
-                      {contentLanguage === "sr"
-                        ? category.nameSr
-                        : category.nameEn}
+                      {category[localizedCategoryKey] || category.nameSr}
                     </strong>
                     <div className="admin-record__meta">
                       {tr("Редослијед", "Order")}: {category.sortOrder}
@@ -1615,6 +1662,7 @@ export default function Admin() {
                     en: Boolean(
                       draft.nameEn.trim(),
                     ),
+                    ru: Boolean(draft.nameRu.trim()),
                   }}
                 />
               </div>
@@ -1634,9 +1682,7 @@ export default function Admin() {
                     </option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
-                        {contentLanguage === "sr"
-                          ? category.nameSr
-                          : category.nameEn}
+                        {category[localizedCategoryKey] || category.nameSr}
                       </option>
                     ))}
                   </select>
@@ -1644,7 +1690,7 @@ export default function Admin() {
                 <Field label={tr("Назив пића", "Drink name")}>
                   <input
                     className="admin-input"
-                    required
+                    required={contentLanguage !== "ru"}
                     value={draft[localizedItemKey("name")]}
                     onChange={(event) =>
                       setDraft({
@@ -1714,16 +1760,15 @@ export default function Admin() {
                   )}
                   <div className="admin-record__content">
                     <strong className="admin-record__title">
-                      {contentLanguage === "sr" ? item.nameSr : item.nameEn}
+                      {item[localizedItemKey("name")] || item.nameSr}
                     </strong>
                     <div className="admin-record__meta">
-                      {(contentLanguage === "sr"
-                        ? categories.find(
-                            (category) => category.id === item.categoryId,
-                          )?.nameSr
-                        : categories.find(
-                            (category) => category.id === item.categoryId,
-                          )?.nameEn) ??
+                      {(categories.find(
+                        (category) => category.id === item.categoryId,
+                      )?.[localizedCategoryKey] ||
+                        categories.find(
+                          (category) => category.id === item.categoryId,
+                        )?.nameSr) ??
                         tr("Без категорије", "No category")}{" "}
                       · {item.price}
                     </div>
@@ -1775,6 +1820,7 @@ export default function Admin() {
                   completed={{
                     sr: Boolean(galleryDraft.altSr.trim()),
                     en: Boolean(galleryDraft.altEn.trim()),
+                    ru: Boolean(galleryDraft.altRu.trim()),
                   }}
                 />
               </div>
@@ -1791,7 +1837,7 @@ export default function Admin() {
                 <Field label={tr("Опис слике", "Image description")} full>
                   <input
                     className="admin-input"
-                    required
+                    required={contentLanguage !== "ru"}
                     value={galleryDraft[localizedGalleryKey]}
                     onChange={(event) =>
                       setGalleryDraft({
@@ -1865,7 +1911,7 @@ export default function Admin() {
                   />
                   <div className="admin-record__content">
                     <strong className="admin-record__title">
-                      {contentLanguage === "sr" ? item.altSr : item.altEn}
+                      {item[localizedGalleryKey] || item.altSr}
                     </strong>
                     <div className="admin-record__meta">
                       {item.isPublished

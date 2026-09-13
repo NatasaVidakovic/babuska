@@ -16,10 +16,15 @@ describe("localized content", () => {
       id: "1",
       nameSr: "Кафа",
       nameEn: "Coffee",
+      nameRu: "Кофе",
       sortOrder: 0,
     };
     expect(localizeCategory(category, "sr")?.name).toBe("Кафа");
     expect(localizeCategory(category, "en")?.name).toBe("Coffee");
+    expect(localizeCategory(category, "ru")?.name).toBe("Кофе");
+    expect(localizeCategory({ ...category, nameRu: "" }, "ru")?.name).toBe(
+      "Кафа",
+    );
     expect(localizeCategory({ ...category, nameSr: "Kafa" }, "sr")).toBeNull();
   });
 
@@ -33,10 +38,13 @@ describe("localized content", () => {
       imageVariants: {},
       nameSr: "Еспресо",
       nameEn: "Espresso",
+      nameRu: "Эспрессо",
       descriptionSr: "",
       descriptionEn: "Single espresso.",
+      descriptionRu: "",
       factSr: "",
       factEn: "",
+      factRu: "",
     };
     expect(localizeMenuItem(item, "sr")).toMatchObject({
       name: "Еспресо",
@@ -44,6 +52,10 @@ describe("localized content", () => {
       image: "",
     });
     expect(localizeMenuItem(item, "en")?.name).toBe("Espresso");
+    expect(localizeMenuItem(item, "ru")?.name).toBe("Эспрессо");
+    expect(localizeMenuItem({ ...item, nameRu: "" }, "ru")?.name).toBe(
+      "Еспресо",
+    );
   });
 
   it("allows an empty optional fact in both languages", () => {
@@ -56,12 +68,45 @@ describe("localized content", () => {
       imageVariants: {},
       nameSr: "Еспресо",
       nameEn: "Espresso",
+      nameRu: "Эспрессо",
       descriptionSr: "Кратак, снажан напитак.",
       descriptionEn: "A short, strong drink.",
+      descriptionRu: "Крепкий кофе.",
       factSr: "",
       factEn: "",
+      factRu: "",
     };
     expect(localizeMenuItem(item, "sr")?.fact).toBe("");
     expect(localizeMenuItem(item, "en")?.fact).toBe("");
+    expect(localizeMenuItem(item, "ru")).toMatchObject({
+      name: "Эспрессо",
+      description: "Крепкий кофе.",
+      fact: "",
+    });
+  });
+
+  it("falls back from missing optional Russian copy to Serbian copy", () => {
+    const item = {
+      id: "1",
+      categoryId: "c1",
+      price: "5.00 КМ",
+      image: "",
+      storagePath: "",
+      imageVariants: {},
+      nameSr: "Еспресо",
+      nameEn: "Espresso",
+      nameRu: "Эспрессо",
+      descriptionSr: "Кратак напитак.",
+      descriptionEn: "A short drink.",
+      descriptionRu: "",
+      factSr: "Зрно је свјеже мљевено.",
+      factEn: "Freshly ground beans.",
+      factRu: "",
+    };
+
+    expect(localizeMenuItem(item, "ru")).toMatchObject({
+      description: "Кратак напитак.",
+      fact: "Зрно је свјеже мљевено.",
+    });
   });
 });

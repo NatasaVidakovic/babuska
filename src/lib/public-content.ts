@@ -7,7 +7,7 @@ import type {
 } from "./content";
 import { parseMediaVariants } from "./media-variants";
 
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const REQUEST_TIMEOUT_MS = 8_000;
 export const PUBLIC_CONTENT_CACHE_KEY = "cafe-babuska:public-content:v1";
 
@@ -65,30 +65,43 @@ export const emptySiteSettings: SiteSettings = {
   heroImageVariants: {},
   heroTitleSr: "",
   heroTitleEn: "",
+  heroTitleRu: "",
   heroDescriptionSr: "",
   heroDescriptionEn: "",
+  heroDescriptionRu: "",
   heroCtaSr: "",
   heroCtaEn: "",
+  heroCtaRu: "",
   footerAddressHeadingSr: "",
   footerAddressHeadingEn: "",
+  footerAddressHeadingRu: "",
   footerAddressLine1Sr: "",
   footerAddressLine1En: "",
+  footerAddressLine1Ru: "",
   footerAddressLine2Sr: "",
   footerAddressLine2En: "",
+  footerAddressLine2Ru: "",
   footerAddressLine3Sr: "",
   footerAddressLine3En: "",
+  footerAddressLine3Ru: "",
   footerHoursHeadingSr: "",
   footerHoursHeadingEn: "",
+  footerHoursHeadingRu: "",
   footerHoursLine1Sr: "",
   footerHoursLine1En: "",
+  footerHoursLine1Ru: "",
   footerHoursLine2Sr: "",
   footerHoursLine2En: "",
+  footerHoursLine2Ru: "",
   footerHoursLine3Sr: "",
   footerHoursLine3En: "",
+  footerHoursLine3Ru: "",
   footerContactHeadingSr: "",
   footerContactHeadingEn: "",
+  footerContactHeadingRu: "",
   footerCopyrightSr: "",
   footerCopyrightEn: "",
+  footerCopyrightRu: "",
 };
 
 const record = (value: unknown): Record<string, unknown> | null =>
@@ -113,30 +126,43 @@ function settingsFromRaw(value: unknown): SiteSettings {
     heroImageVariants: parseMediaVariants(row.hero_image_variants),
     heroTitleSr: string(row.hero_title_sr),
     heroTitleEn: string(row.hero_title_en),
+    heroTitleRu: string(row.hero_title_ru),
     heroDescriptionSr: string(row.hero_description_sr),
     heroDescriptionEn: string(row.hero_description_en),
+    heroDescriptionRu: string(row.hero_description_ru),
     heroCtaSr: string(row.hero_cta_sr),
     heroCtaEn: string(row.hero_cta_en),
+    heroCtaRu: string(row.hero_cta_ru),
     footerAddressHeadingSr: string(row.footer_address_heading_sr),
     footerAddressHeadingEn: string(row.footer_address_heading_en),
+    footerAddressHeadingRu: string(row.footer_address_heading_ru),
     footerAddressLine1Sr: string(row.footer_address_line_1_sr),
     footerAddressLine1En: string(row.footer_address_line_1_en),
+    footerAddressLine1Ru: string(row.footer_address_line_1_ru),
     footerAddressLine2Sr: string(row.footer_address_line_2_sr),
     footerAddressLine2En: string(row.footer_address_line_2_en),
+    footerAddressLine2Ru: string(row.footer_address_line_2_ru),
     footerAddressLine3Sr: string(row.footer_address_line_3_sr),
     footerAddressLine3En: string(row.footer_address_line_3_en),
+    footerAddressLine3Ru: string(row.footer_address_line_3_ru),
     footerHoursHeadingSr: string(row.footer_hours_heading_sr),
     footerHoursHeadingEn: string(row.footer_hours_heading_en),
+    footerHoursHeadingRu: string(row.footer_hours_heading_ru),
     footerHoursLine1Sr: string(row.footer_hours_line_1_sr),
     footerHoursLine1En: string(row.footer_hours_line_1_en),
+    footerHoursLine1Ru: string(row.footer_hours_line_1_ru),
     footerHoursLine2Sr: string(row.footer_hours_line_2_sr),
     footerHoursLine2En: string(row.footer_hours_line_2_en),
+    footerHoursLine2Ru: string(row.footer_hours_line_2_ru),
     footerHoursLine3Sr: string(row.footer_hours_line_3_sr),
     footerHoursLine3En: string(row.footer_hours_line_3_en),
+    footerHoursLine3Ru: string(row.footer_hours_line_3_ru),
     footerContactHeadingSr: string(row.footer_contact_heading_sr),
     footerContactHeadingEn: string(row.footer_contact_heading_en),
+    footerContactHeadingRu: string(row.footer_contact_heading_ru),
     footerCopyrightSr: string(row.footer_copyright_sr),
     footerCopyrightEn: string(row.footer_copyright_en),
+    footerCopyrightRu: string(row.footer_copyright_ru),
   };
 }
 
@@ -153,6 +179,7 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
       id: string(row.id),
       nameSr: string(row.name_sr),
       nameEn: string(row.name_en),
+      nameRu: string(row.name_ru),
       sortOrder: number(row.sort_order),
     }))
     .filter((item) => item.id)
@@ -164,6 +191,7 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
       id: string(row.id),
       nameSr: string(row.name_sr),
       nameEn: string(row.name_en),
+      nameRu: string(row.name_ru),
       categoryId: string(row.category_id),
       price: string(row.price),
       image: string(row.image_url),
@@ -174,8 +202,10 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
       // never expose it while the administrator is cleaning up legacy content.
       descriptionSr: "",
       descriptionEn: "",
+      descriptionRu: "",
       factSr: "",
       factEn: "",
+      factRu: "",
       sortOrder: number(row.sort_order),
     }))
     .filter((item) => item.id && item.categoryId)
@@ -191,6 +221,7 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
       imageVariants: parseMediaVariants(row.image_variants),
       altSr: string(row.alt_sr),
       altEn: string(row.alt_en),
+      altRu: string(row.alt_ru),
       sortOrder: number(row.sort_order),
       isPublished: true,
     }))
@@ -279,7 +310,8 @@ export function readPublicContentCache(
       !parsed.data.categories.every(
         (category: unknown) =>
           typeof record(category)?.id === "string" &&
-          typeof record(category)?.nameSr === "string",
+          typeof record(category)?.nameSr === "string" &&
+          typeof record(category)?.nameRu === "string",
       ) ||
       !parsed.data.items.every(
         (item: unknown) =>

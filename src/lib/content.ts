@@ -1,11 +1,12 @@
 import type { MediaVariants } from "./media-variants";
 
-export type Lang = "sr" | "en";
+export type Lang = "sr" | "en" | "ru";
 
 export type MenuCategory = {
   id: string;
   nameSr: string;
   nameEn: string;
+  nameRu: string;
   sortOrder: number;
 };
 
@@ -13,6 +14,7 @@ export type AdminMenuItem = {
   id: string;
   nameSr: string;
   nameEn: string;
+  nameRu: string;
   categoryId: string;
   price: string;
   image: string;
@@ -20,8 +22,10 @@ export type AdminMenuItem = {
   imageVariants: MediaVariants;
   descriptionSr: string;
   descriptionEn: string;
+  descriptionRu: string;
   factSr: string;
   factEn: string;
+  factRu: string;
 };
 
 export type AdminGalleryItem = {
@@ -31,6 +35,7 @@ export type AdminGalleryItem = {
   imageVariants: MediaVariants;
   altSr: string;
   altEn: string;
+  altRu: string;
   sortOrder: number;
   isPublished: boolean;
 };
@@ -58,30 +63,43 @@ export type SiteSettings = {
   heroImageVariants: MediaVariants;
   heroTitleSr: string;
   heroTitleEn: string;
+  heroTitleRu: string;
   heroDescriptionSr: string;
   heroDescriptionEn: string;
+  heroDescriptionRu: string;
   heroCtaSr: string;
   heroCtaEn: string;
+  heroCtaRu: string;
   footerAddressHeadingSr: string;
   footerAddressHeadingEn: string;
+  footerAddressHeadingRu: string;
   footerAddressLine1Sr: string;
   footerAddressLine1En: string;
+  footerAddressLine1Ru: string;
   footerAddressLine2Sr: string;
   footerAddressLine2En: string;
+  footerAddressLine2Ru: string;
   footerAddressLine3Sr: string;
   footerAddressLine3En: string;
+  footerAddressLine3Ru: string;
   footerHoursHeadingSr: string;
   footerHoursHeadingEn: string;
+  footerHoursHeadingRu: string;
   footerHoursLine1Sr: string;
   footerHoursLine1En: string;
+  footerHoursLine1Ru: string;
   footerHoursLine2Sr: string;
   footerHoursLine2En: string;
+  footerHoursLine2Ru: string;
   footerHoursLine3Sr: string;
   footerHoursLine3En: string;
+  footerHoursLine3Ru: string;
   footerContactHeadingSr: string;
   footerContactHeadingEn: string;
+  footerContactHeadingRu: string;
   footerCopyrightSr: string;
   footerCopyrightEn: string;
+  footerCopyrightRu: string;
 };
 
 export type LocalizedMenuCategory = Pick<MenuCategory, "id" | "sortOrder"> & {
@@ -118,18 +136,29 @@ export function isValidLocalizedText(
 export function localizedText(
   sr: string,
   en: string,
+  ru: string,
   lang: Lang,
   optional = false,
 ): string | null {
-  const value = lang === "sr" ? sr : en;
-  return isValidLocalizedText(value, lang, optional) ? value.trim() : null;
+  const value = lang === "sr" ? sr : lang === "en" ? en : ru;
+  if (lang === "ru" && !value.trim())
+    return isValidLocalizedText(sr, "sr", optional) ? sr.trim() : null;
+  if (isValidLocalizedText(value, lang, optional)) return value.trim();
+  if (lang === "ru" && isValidLocalizedText(sr, "sr", optional))
+    return sr.trim();
+  return null;
 }
 
 export function localizeCategory(
   category: MenuCategory,
   lang: Lang,
 ): LocalizedMenuCategory | null {
-  const name = localizedText(category.nameSr, category.nameEn, lang);
+  const name = localizedText(
+    category.nameSr,
+    category.nameEn,
+    category.nameRu,
+    lang,
+  );
   return name ? { id: category.id, sortOrder: category.sortOrder, name } : null;
 }
 
@@ -137,14 +166,21 @@ export function localizeMenuItem(
   item: AdminMenuItem,
   lang: Lang,
 ): LocalizedMenuItem | null {
-  const name = localizedText(item.nameSr, item.nameEn, lang);
+  const name = localizedText(item.nameSr, item.nameEn, item.nameRu, lang);
   const description = localizedText(
     item.descriptionSr,
     item.descriptionEn,
+    item.descriptionRu,
     lang,
     true,
   );
-  const fact = localizedText(item.factSr, item.factEn, lang, true);
+  const fact = localizedText(
+    item.factSr,
+    item.factEn,
+    item.factRu,
+    lang,
+    true,
+  );
   if (!name || description === null || fact === null) return null;
   return {
     id: item.id,

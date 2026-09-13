@@ -282,6 +282,14 @@ const categories = [
   ],
 ];
 
+const categoryRussian = new Map([
+  ["Кафа", "Кофе"],
+  ["Бабушка специјалитети", "Фирменные напитки «Бабушка»"],
+  ["Чајеви и инфузије", "Чаи и настои"],
+  ["Хладна пића", "Холодные напитки"],
+  ["Какао и топли напици", "Какао и горячие напитки"],
+]);
+
 async function uploadRemote(source, path) {
   const response = await fetch(source);
   if (!response.ok)
@@ -333,7 +341,7 @@ if (heroError)
 
 const { data: existingCategories, error: categoriesError } = await client
   .from("menu_categories")
-  .select("id, name_sr, name_en");
+  .select("id, name_sr, name_en, name_ru");
 if (categoriesError)
   throw new Error(`Could not read categories: ${categoriesError.message}`);
 let itemCount = 0;
@@ -348,6 +356,7 @@ for (const [
     name: nameSr,
     name_sr: nameSr,
     name_en: nameEn,
+    name_ru: categoryRussian.get(nameSr) ?? nameSr,
     sort_order: categoryOrder,
     is_active: true,
   };
@@ -376,6 +385,7 @@ for (const [
       name: itemSr,
       name_sr: itemSr,
       name_en: itemEn,
+      name_ru: itemSr,
       category_id: categoryResult.data.id,
       price,
       image_url: media.url,
@@ -383,9 +393,11 @@ for (const [
       description: descriptionSr,
       description_sr: descriptionSr,
       description_en: descriptionEn,
+      description_ru: descriptionSr,
       fact: factSr,
       fact_sr: factSr,
       fact_en: factEn,
+      fact_ru: factSr,
       is_published: true,
       sort_order: itemOrder,
     };
@@ -420,11 +432,11 @@ if (legacyDuplicateError)
   );
 
 const galleryAlt = [
-  ["Унутрашњост кафеа", "Café interior"],
-  ["Сто у кафеу", "Café table"],
-  ["Детаљ кафе", "Coffee detail"],
-  ["Топла атмосфера", "Warm atmosphere"],
-  ["Угодан кутак", "Cosy café corner"],
+  ["Унутрашњост кафеа", "Café interior", "Интерьер кафе"],
+  ["Сто у кафеу", "Café table", "Столик в кафе"],
+  ["Детаљ кафе", "Coffee detail", "Кофейная деталь"],
+  ["Топла атмосфера", "Warm atmosphere", "Тёплая атмосфера"],
+  ["Угодан кутак", "Cosy café corner", "Уютный уголок кафе"],
 ];
 for (const [index, source] of gallerySources.entries()) {
   const path = `gallery/demo-${index + 1}.jpg`;
@@ -434,6 +446,7 @@ for (const [index, source] of gallerySources.entries()) {
     storage_path: path,
     alt_sr: galleryAlt[index][0],
     alt_en: galleryAlt[index][1],
+    alt_ru: galleryAlt[index][2],
     is_published: true,
     sort_order: index,
   };
@@ -452,5 +465,5 @@ for (const [index, source] of gallerySources.entries()) {
 }
 
 console.log(
-  `Demo content ready: ${categories.length} bilingual categories, ${itemCount} bilingual menu items, hero and ${gallerySources.length} gallery images in Supabase Storage.`,
+  `Demo content ready: ${categories.length} trilingual categories, ${itemCount} trilingual menu items, hero and ${gallerySources.length} gallery images in Supabase Storage.`,
 );

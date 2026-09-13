@@ -11,6 +11,7 @@ import {
 const rawBootstrap = {
   settings: {
     instagram: "https://instagram.com/babuska",
+    hero_title_ru: "Вкус Москвы в Баня-Луке",
     hero_image_url: "https://cdn.test/hero.webp",
     hero_image_variants: {
       "640": {
@@ -21,13 +22,20 @@ const rawBootstrap = {
     },
   },
   categories: [
-    { id: "category", name_sr: "Кафа", name_en: "Coffee", sort_order: 1 },
+    {
+      id: "category",
+      name_sr: "Кафа",
+      name_en: "Coffee",
+      name_ru: "Кофе",
+      sort_order: 1,
+    },
   ],
   items: [
     {
       id: "item",
       name_sr: "Еспресо",
       name_en: "Espresso",
+      name_ru: "Эспрессо",
       category_id: "category",
       price: "3.50 КМ",
       image_url: "https://cdn.test/item.webp",
@@ -35,8 +43,10 @@ const rawBootstrap = {
       image_variants: {},
       description_sr: "Кратка кафа.",
       description_en: "Short coffee.",
+      description_ru: "Крепкий кофе.",
       fact_sr: "",
       fact_en: "",
+      fact_ru: "",
       sort_order: 1,
     },
   ],
@@ -78,6 +88,9 @@ describe("public content bootstrap", () => {
       "publishable",
     );
     expect(result.categories[0]?.nameSr).toBe("Кафа");
+    expect(result.categories[0]?.nameRu).toBe("Кофе");
+    expect(result.items[0]?.nameRu).toBe("Эспрессо");
+    expect(result.settings.heroTitleRu).toBe("Вкус Москвы в Баня-Луке");
     expect(result.items[0]?.imageVariants).toEqual({});
     expect(result.items[0]?.descriptionSr).toBe("");
     expect(result.items[0]?.descriptionEn).toBe("");

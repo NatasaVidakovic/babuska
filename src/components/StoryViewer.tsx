@@ -22,6 +22,12 @@ const copy = {
     next: "Next story",
     progress: "Story progress",
   },
+  ru: {
+    close: "Закрыть истории",
+    previous: "Предыдущая история",
+    next: "Следующая история",
+    progress: "Просмотр историй",
+  },
 } as const;
 
 export default function StoryViewer({
@@ -116,4 +122,3 @@ export default function StoryViewer({
     </div>
   );
 }
-

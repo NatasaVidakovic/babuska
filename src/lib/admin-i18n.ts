@@ -25,12 +25,12 @@ export const ADMIN_TABS = {
     sr: [
       "Садржај",
       "Садржај странице",
-      "Уредите почетни екран и подножје на српском и енглеском језику.",
+      "Уредите почетни екран и подножје на српском, енглеском и руском језику.",
     ],
     en: [
       "Content",
       "Page content",
-      "Edit the homepage and footer in Serbian and English.",
+      "Edit the homepage and footer in Serbian, English, and Russian.",
     ],
   },
   categories: {

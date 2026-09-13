@@ -11,29 +11,66 @@ const normalize = (value) =>
 const price = (value) => `${value.toFixed(2)} KM`;
 
 const categories = [
-  ["hot", "Топли напици", "Warm Drinks", ["topli napici"]],
-  ["water", "Воде", "Water", ["vode"]],
-  ["soft", "Сокови", "Soft Drinks", ["sokovi"]],
-  ["fresh", "Цијеђени сокови", "Fresh Juices", ["cijedjeni sokovi"]],
-  ["beer", "Пиво", "Beer", ["pivo"]],
-  ["cider", "Сајдери", "Cider", ["sajderi", "цидери", "cideri"]],
-  ["rakija", "Ракије", "Rakija", ["rakije"]],
-  ["liqueur", "Ликери", "Liqueurs", ["likeri"]],
-  ["whisky", "Виски бурбон", "Whisky / Bourbon", ["viski burbon", "вискиј бурбон"]],
-  ["vodka", "Вотка", "Vodka", ["votka", "водка"]],
-  ["tequila", "Текила", "Tequila", ["tekila"]],
-  ["gin", "Џин", "Gin", ["dzin"]],
-  ["rum", "Рум", "Rum", ["rum"]],
-  ["cocktail", "Коктел", "Cocktails", ["koktel"]],
-  ["wine", "Вино", "Wine", ["vino"]],
-  ["sparkling", "Пјенушава вина", "Sparkling Wine", ["pjenusava vina"]],
-].map(([id, nameSr, nameEn, aliases], sortOrder) => ({
+  ["hot", "Топли напици", "Warm Drinks", "Горячие напитки", ["topli napici"]],
+  ["water", "Воде", "Water", "Вода", ["vode"]],
+  ["soft", "Сокови", "Soft Drinks", "Безалкогольные напитки", ["sokovi"]],
+  ["fresh", "Цијеђени сокови", "Fresh Juices", "Свежевыжатые соки", ["cijedjeni sokovi"]],
+  ["beer", "Пиво", "Beer", "Пиво", ["pivo"]],
+  ["cider", "Сајдери", "Cider", "Сидр", ["sajderi", "цидери", "cideri"]],
+  ["rakija", "Ракије", "Rakija", "Ракия", ["rakije"]],
+  ["liqueur", "Ликери", "Liqueurs", "Ликёры", ["likeri"]],
+  ["whisky", "Виски бурбон", "Whisky / Bourbon", "Виски и бурбон", ["viski burbon", "вискиј бурбон"]],
+  ["vodka", "Вотка", "Vodka", "Водка", ["votka", "водка"]],
+  ["tequila", "Текила", "Tequila", "Текила", ["tekila"]],
+  ["gin", "Џин", "Gin", "Джин", ["dzin"]],
+  ["rum", "Рум", "Rum", "Ром", ["rum"]],
+  ["cocktail", "Коктел", "Cocktails", "Коктейли", ["koktel"]],
+  ["wine", "Вино", "Wine", "Вино", ["vino"]],
+  ["sparkling", "Пјенушава вина", "Sparkling Wine", "Игристые вина", ["pjenusava vina"]],
+].map(([id, nameSr, nameEn, nameRu, aliases], sortOrder) => ({
   id,
   nameSr,
   nameEn,
+  nameRu,
   aliases: aliases.map(normalize),
   sortOrder,
 }));
+
+const russianMenuNames = new Map([
+  ["Еспресо", "Эспрессо"],
+  ["Капућино", "Капучино"],
+  ["Капућино са сојиним млијеком", "Капучино с соевым молоком"],
+  ["Лате", "Латте"],
+  ["Чај (мента, камилица, лимунска трава - ђумбир, зелени, црни индијски, јагода - ванилија, брусница, трешња, јабука - цимет, шумско воће)", "Чай (мята, ромашка, лемонграсс и имбирь, зелёный, индийский чёрный, клубника и ваниль, клюква, вишня, яблоко и корица, лесные ягоды)"],
+  ["Кока-Кола Зиро", "Кока-Кола Зеро"],
+  ["Швепс битер лемон", "Швепс Биттер Лемон"],
+  ["Витаминка сокови (ђус, мултивитамин, бресква, јабука, боровница, јагода)", "Соки Витаминка (апельсин, мультивитамин, персик, яблоко, черника, клубника)"],
+  ["Џуси вита (лимун, наранџа)", "Джуси Вита (лимон, апельсин)"],
+  ["Лимунада", "Лимонад"],
+  ["Цијеђена наранџа", "Свежевыжатый апельсиновый сок"],
+  ["Цијеђени грејп", "Свежевыжатый грейпфрутовый сок"],
+  ["Цијеђена јабука", "Свежевыжатый яблочный сок"],
+  ["Цијеђени микс наранџа и лимун", "Свежевыжатый микс апельсина и лимона"],
+  ["Цијеђени микс наранџа и грејп", "Свежевыжатый микс апельсина и грейпфрута"],
+  ["Цијеђени микс наранџа, лимун и грејп", "Свежевыжатый микс апельсина, лимона и грейпфрута"],
+  ["Зарић шљива", "Зарич Слива"],
+  ["Зарић дуња", "Зарич Айва"],
+  ["Зарић кајсија", "Зарич Абрикос"],
+  ["Зарић крушка", "Зарич Груша"],
+  ["Горда шљивовица", "Горда Сливовица"],
+  ["Завет траварица", "Завет Травяная ракия"],
+  ["Мараска вишњевац", "Мараска Вишнёвый ликёр"],
+  ["Мараска медица", "Мараска Медовый ликёр"],
+  ["Капетан Морган Вајт", "Капитан Морган Уайт"],
+  ["Капетан Морган Голд", "Капитан Морган Голд"],
+  ["Вотка Гимлет", "Водка Гимлет"],
+  ["Тиквеш Александрија црвена", "Тиквеш Александрия красное"],
+  ["Тиквеш Александрија црвена 0,1", "Тиквеш Александрия красное 0,1"],
+  ["Тиквеш Александрија бијела", "Тиквеш Александрия белое"],
+  ["Тиквеш Александрија бијела 0,1", "Тиквеш Александрия белое 0,1"],
+  ["Луда Мара бијела", "Луда Мара белое"],
+  ["Луда Мара црвена", "Луда Мара красное"],
+]);
 
 const rows = [
   ["hot", "Еспресо", "Espresso", 2.5],
@@ -145,6 +182,7 @@ const rows = [
   categoryId,
   nameSr,
   nameEn,
+  nameRu: russianMenuNames.get(nameSr) ?? nameSr,
   price: price(value),
   sortOrder,
 }));
@@ -181,7 +219,7 @@ function validateDataset() {
   if (rows.length !== 105) throw new Error(`Expected 105 rows, found ${rows.length}.`);
   const keys = new Set();
   for (const row of rows) {
-    if (!/[\p{Script=Cyrillic}]/u.test(row.nameSr) || !row.nameEn || !/^\d+\.\d{2} KM$/.test(row.price))
+    if (!/[\p{Script=Cyrillic}]/u.test(row.nameSr) || !row.nameEn || !/[\p{Script=Cyrillic}]/u.test(row.nameRu) || !/^\d+\.\d{2} KM$/.test(row.price))
       throw new Error(`Invalid canonical row: ${row.nameSr}`);
     const key = `${row.categoryId}:${normalize(row.nameSr)}`;
     if (keys.has(key)) throw new Error(`Duplicate canonical row: ${row.nameSr}`);
@@ -206,15 +244,15 @@ async function main() {
   const { data: auth, error: authError } = await client.auth.signInWithPassword({ email, password });
   if (authError || !auth.session) throw new Error(`Administrator authentication failed: ${authError?.message ?? "no session"}`);
   const [{ data: existingCategories, error: categoryReadError }, { data: existingItems, error: itemReadError }] = await Promise.all([
-    client.from("menu_categories").select("id, name, name_sr, name_en, sort_order"),
-    client.from("menu_items").select("id, category_id, name, name_sr, name_en, image_url, storage_path, image_variants"),
+    client.from("menu_categories").select("id, name, name_sr, name_en, name_ru, sort_order"),
+    client.from("menu_items").select("id, category_id, name, name_sr, name_en, name_ru, image_url, storage_path, image_variants"),
   ]);
   if (categoryReadError || itemReadError) throw new Error(categoryReadError?.message ?? itemReadError?.message);
   const categoryIds = new Map();
   for (const category of categories) {
     const known = [category.nameSr, category.nameEn, ...category.aliases].map(normalize);
     const existing = (existingCategories ?? []).find((row) => known.includes(normalize(row.name_sr ?? row.name_en ?? row.name ?? "")) || known.includes(normalize(row.name_en ?? "")));
-    const payload = { name: category.nameSr, name_sr: category.nameSr, name_en: category.nameEn, sort_order: category.sortOrder, is_active: true };
+    const payload = { name: category.nameSr, name_sr: category.nameSr, name_en: category.nameEn, name_ru: category.nameRu, sort_order: category.sortOrder, is_active: true };
     const result = existing ? await client.from("menu_categories").update(payload).eq("id", existing.id).select("id").single() : await client.from("menu_categories").insert(payload).select("id").single();
     if (result.error || !result.data) throw new Error(`Could not save ${category.nameSr}: ${result.error?.message ?? "no row"}`);
     categoryIds.set(category.id, result.data.id);
@@ -223,7 +261,7 @@ async function main() {
     const categoryId = categoryIds.get(row.categoryId);
     const knownNames = [normalize(row.nameSr), ...(legacyNames.get(normalize(row.nameSr)) ?? [])];
     const matching = (existingItems ?? []).find((item) => item.category_id === categoryId && knownNames.includes(normalize(item.name_sr ?? item.name ?? "")));
-    const payload = { name: row.nameSr, name_sr: row.nameSr, name_en: row.nameEn, category_id: categoryId, price: row.price, description: "", description_sr: "", description_en: "", fact: null, fact_sr: null, fact_en: null, is_published: true, sort_order: row.sortOrder };
+    const payload = { name: row.nameSr, name_sr: row.nameSr, name_en: row.nameEn, name_ru: row.nameRu, category_id: categoryId, price: row.price, description: "", description_sr: "", description_en: "", description_ru: "", fact: null, fact_sr: null, fact_en: null, fact_ru: null, is_published: true, sort_order: row.sortOrder };
     const result = matching ? await client.from("menu_items").update(payload).eq("id", matching.id) : await client.from("menu_items").insert(payload);
     if (result.error) throw new Error(`Could not save ${row.nameSr}: ${result.error.message}`);
   }
@@ -246,7 +284,7 @@ async function main() {
     const { error: staleDeleteError } = await client.from("menu_items").delete().in("id", staleIds);
     if (staleDeleteError) throw new Error(`Could not remove legacy duplicates: ${staleDeleteError.message}`);
   }
-  const { data: finalItems, error: finalError } = await client.from("menu_items").select("id, category_id, name_sr, name_en, price, description_sr, description_en, fact_sr, fact_en").eq("is_published", true);
+  const { data: finalItems, error: finalError } = await client.from("menu_items").select("id, category_id, name_sr, name_en, name_ru, price, description_sr, description_en, description_ru, fact_sr, fact_en, fact_ru").eq("is_published", true);
   if (finalError) throw new Error(finalError.message);
   const actual = new Set((finalItems ?? []).map((item) => `${item.category_id}:${normalize(item.name_sr)}:${item.price}`));
   if (expected.size !== actual.size || [...expected].some((key) => !actual.has(key))) throw new Error("Post-write verification failed: published menu does not exactly match Canva dataset.");
