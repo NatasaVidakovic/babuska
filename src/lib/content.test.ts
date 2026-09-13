@@ -22,9 +22,7 @@ describe("localized content", () => {
     expect(localizeCategory(category, "sr")?.name).toBe("Кафа");
     expect(localizeCategory(category, "en")?.name).toBe("Coffee");
     expect(localizeCategory(category, "ru")?.name).toBe("Кофе");
-    expect(localizeCategory({ ...category, nameRu: "" }, "ru")?.name).toBe(
-      "Кафа",
-    );
+    expect(localizeCategory({ ...category, nameRu: "" }, "ru")).toBeNull();
     expect(localizeCategory({ ...category, nameSr: "Kafa" }, "sr")).toBeNull();
   });
 
@@ -53,9 +51,7 @@ describe("localized content", () => {
     });
     expect(localizeMenuItem(item, "en")?.name).toBe("Espresso");
     expect(localizeMenuItem(item, "ru")?.name).toBe("Эспрессо");
-    expect(localizeMenuItem({ ...item, nameRu: "" }, "ru")?.name).toBe(
-      "Еспресо",
-    );
+    expect(localizeMenuItem({ ...item, nameRu: "" }, "ru")).toBeNull();
   });
 
   it("allows an empty optional fact in both languages", () => {
@@ -85,7 +81,7 @@ describe("localized content", () => {
     });
   });
 
-  it("falls back from missing optional Russian copy to Serbian copy", () => {
+  it("does not show Serbian copy in Russian when a translation is missing", () => {
     const item = {
       id: "1",
       categoryId: "c1",
@@ -105,8 +101,8 @@ describe("localized content", () => {
     };
 
     expect(localizeMenuItem(item, "ru")).toMatchObject({
-      description: "Кратак напитак.",
-      fact: "Зрно је свјеже мљевено.",
+      description: "",
+      fact: "",
     });
   });
 });

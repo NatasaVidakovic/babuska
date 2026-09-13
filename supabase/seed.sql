@@ -16,10 +16,10 @@ insert into public.site_settings (
 )
 values (
   1, '', '', '', '+387 65 000 000', 'hello@cafebabuska.ba', '@cafebabuska',
-  'Укус Москве у Бањој Луци', 'A Taste of Moscow in Banja Luka', 'Вкус Москвы в Баня-Луке',
-  'Ексклузивни напици, фини чајеви и руско гостопримство — послужени с тихом, спокојном топлином.',
-  'Signature beverages, fine teas, and Russian hospitality — served with quiet, unhurried warmth.',
-  'Авторские напитки, изысканные чаи и русское гостеприимство — с тихим, душевным теплом.',
+  'Кафе Бабушка у Бањој Луци', 'Caffe Babuska in Banja Luka', 'Кафе Бабушка в Баня-Луке',
+  'Кафа, пића и пријатна атмосфера у срцу Бање Луке.',
+  'Coffee, drinks and a welcoming atmosphere in the heart of Banja Luka.',
+  'Кофе, напитки и приятная атмосфера в самом сердце Баня-Луки.',
   'Истражи мени', 'Explore the Menu', 'Открыть меню',
   'Адреса', 'Address', 'Адрес',
   'Господска улица 14', 'Gospodska Street 14', 'Господская улица, 14',

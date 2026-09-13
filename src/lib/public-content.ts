@@ -7,7 +7,7 @@ import type {
 } from "./content";
 import { parseMediaVariants } from "./media-variants";
 
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 const REQUEST_TIMEOUT_MS = 8_000;
 export const PUBLIC_CONTENT_CACHE_KEY = "cafe-babuska:public-content:v1";
 
@@ -235,9 +235,6 @@ export function normalizePublicContent(value: unknown): PublicContentSnapshot {
       image: string(row.image_url),
       storagePath: string(row.storage_path),
       imageVariants: parseMediaVariants(row.image_variants),
-      descriptionSr: string(row.description_sr),
-      descriptionEn: string(row.description_en),
-      descriptionRu: string(row.description_ru),
       sortOrder: number(row.sort_order),
       isPublished: true,
       publishedAt: string(row.published_at),
@@ -333,8 +330,6 @@ export function readPublicContentCache(
         (item: unknown) =>
           typeof record(item)?.id === "string" &&
           typeof record(item)?.image === "string" &&
-          typeof record(item)?.descriptionSr === "string" &&
-          typeof record(item)?.descriptionRu === "string" &&
           typeof record(item)?.expiresAt === "string" &&
           Boolean(record(record(item)?.imageVariants)),
       )

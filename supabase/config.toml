@@ -8,3 +8,6 @@ port = 54332
 
 [studio]
 port = 54323
+
+[functions.translate-content]
+verify_jwt = true

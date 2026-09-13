@@ -3,7 +3,7 @@ import { containsLatinScript, isCyrillicContent } from "./cyrillic";
 
 describe("Cyrillic content validation", () => {
   it("accepts Serbian text written in Cyrillic", () => {
-    expect(containsLatinScript("Укус Москве у Бањој Луци")).toBe(false);
+    expect(containsLatinScript("Кафе Бабушка у Бањој Луци")).toBe(false);
     expect(isCyrillicContent(["Кафа", "Топли напитак"])).toBe(true);
   });
 

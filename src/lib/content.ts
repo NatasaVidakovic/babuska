@@ -45,9 +45,6 @@ export type AdminStoryItem = {
   image: string;
   storagePath: string;
   imageVariants: MediaVariants;
-  descriptionSr: string;
-  descriptionEn: string;
-  descriptionRu: string;
   sortOrder: number;
   isPublished: boolean;
   publishedAt: string;
@@ -144,11 +141,7 @@ export function localizedText(
   optional = false,
 ): string | null {
   const value = lang === "sr" ? sr : lang === "en" ? en : ru;
-  if (lang === "ru" && !value.trim())
-    return isValidLocalizedText(sr, "sr", optional) ? sr.trim() : null;
   if (isValidLocalizedText(value, lang, optional)) return value.trim();
-  if (lang === "ru" && isValidLocalizedText(sr, "sr", optional))
-    return sr.trim();
   return null;
 }
 

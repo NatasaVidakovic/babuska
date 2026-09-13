@@ -11,7 +11,7 @@ import {
 const rawBootstrap = {
   settings: {
     instagram: "https://instagram.com/babuska",
-    hero_title_ru: "Вкус Москвы в Баня-Луке",
+    hero_title_ru: "Кафе Бабушка в Баня-Луке",
     hero_image_url: "https://cdn.test/hero.webp",
     hero_image_variants: {
       "640": {
@@ -93,7 +93,7 @@ describe("public content bootstrap", () => {
     expect(result.categories[0]?.nameSr).toBe("Кафа");
     expect(result.categories[0]?.nameRu).toBe("Кофе");
     expect(result.items[0]?.nameRu).toBe("Эспрессо");
-    expect(result.settings.heroTitleRu).toBe("Вкус Москвы в Баня-Луке");
+    expect(result.settings.heroTitleRu).toBe("Кафе Бабушка в Баня-Луке");
     expect(result.items[0]?.imageVariants).toEqual({});
     expect(result.items[0]?.descriptionSr).toBe("");
     expect(result.items[0]?.descriptionEn).toBe("");
@@ -101,9 +101,6 @@ describe("public content bootstrap", () => {
     expect(result.items[0]?.factEn).toBe("");
     expect(result.settings.heroImageVariants["640"]?.width).toBe(640);
     expect(result.stories[0]?.id).toBe("story-current");
-    expect(result.stories[0]?.descriptionSr).toBe("Ново у понуди");
-    expect(result.stories[0]?.descriptionEn).toBe("New on offer");
-    expect(result.stories[0]?.descriptionRu).toBe("Новинка в меню");
   });
 
   it("ignores malformed and old cache records", () => {

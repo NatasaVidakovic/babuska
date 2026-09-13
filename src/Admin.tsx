@@ -29,16 +29,14 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 type SessionState = "loading" | "signed-out" | "denied" | "ready";
 type Feedback = { text: string; tone: "success" | "error" } | null;
 type ContentLanguage = "sr" | "en" | "ru";
-type StoryDescriptionDraft = Pick<
-  AdminStoryItem,
-  "descriptionSr" | "descriptionEn" | "descriptionRu"
->;
-const CONTENT_SUFFIX = { sr: "Sr", en: "En", ru: "Ru" } as const;
-const emptyStoryDescription: StoryDescriptionDraft = {
-  descriptionSr: "",
-  descriptionEn: "",
-  descriptionRu: "",
+type TranslationEntry = {
+  key: string;
+  sr: string;
+  en: string;
+  ru: string;
 };
+type TranslationResult = Record<string, Pick<TranslationEntry, "en" | "ru">>;
+const CONTENT_SUFFIX = { sr: "Sr", en: "En", ru: "Ru" } as const;
 
 const emptyItem: AdminMenuItem = {
   id: "",
@@ -296,6 +294,22 @@ const settingFields: [TextSettingKey, string][] = [
   ["footerCopyrightRu", "footer_copyright_ru"],
 ];
 
+const localizedSettingNames = [
+  "heroTitle",
+  "heroDescription",
+  "heroCta",
+  "footerAddressHeading",
+  "footerAddressLine1",
+  "footerAddressLine2",
+  "footerAddressLine3",
+  "footerHoursHeading",
+  "footerHoursLine1",
+  "footerHoursLine2",
+  "footerHoursLine3",
+  "footerContactHeading",
+  "footerCopyright",
+] as const;
+
 function settingsFromRow(row: Record<string, unknown> | null): SiteSettings {
   const output = { ...emptySettings };
   for (const [key, column] of settingFields)
@@ -356,9 +370,6 @@ export default function Admin() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [galleryItems, setGalleryItems] = useState<AdminGalleryItem[]>([]);
   const [stories, setStories] = useState<AdminStoryItem[]>([]);
-  const [storyDescriptionDraft, setStoryDescriptionDraft] =
-    useState<StoryDescriptionDraft>(emptyStoryDescription);
-  const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
   const [settings, setSettings] = useState<SiteSettings>(emptySettings);
   const [savedHeroPath, setSavedHeroPath] = useState("");
   const [draft, setDraft] = useState<AdminMenuItem>(emptyItem);
@@ -381,6 +392,54 @@ export default function Admin() {
       "error",
     );
     return false;
+  };
+  const completeTranslations = async (
+    entries: TranslationEntry[],
+  ): Promise<TranslationResult> => {
+    const trimmed = entries.map((entry) => ({
+      ...entry,
+      sr: entry.sr.trim(),
+      en: entry.en.trim(),
+      ru: entry.ru.trim(),
+    }));
+    const missing = trimmed.filter(
+      (entry) => entry.sr && (!entry.en || !entry.ru),
+    );
+    const existing = Object.fromEntries(
+      trimmed.map((entry) => [entry.key, { en: entry.en, ru: entry.ru }]),
+    ) as TranslationResult;
+    if (!missing.length) return existing;
+
+    const { data, error } = await supabase.functions.invoke(
+      "translate-content",
+      { body: { entries: missing.map(({ key, sr }) => ({ key, sr })) } },
+    );
+    if (error) throw error;
+    const translations = data?.translations as
+      | { key?: string; en?: string; ru?: string }[]
+      | undefined;
+    if (!Array.isArray(translations))
+      throw new Error(
+        tr(
+          "Аутоматски превод тренутно није доступан.",
+          "Automatic translation is currently unavailable.",
+        ),
+      );
+    for (const entry of missing) {
+      const translated = translations.find((item) => item.key === entry.key);
+      if (!translated?.en?.trim() || !translated.ru?.trim())
+        throw new Error(
+          tr(
+            "Није могуће довршити све преводе. Покушајте поново.",
+            "All translations could not be completed. Please try again.",
+          ),
+        );
+      existing[entry.key] = {
+        en: entry.en || translated.en.trim(),
+        ru: entry.ru || translated.ru.trim(),
+      };
+    }
+    return existing;
   };
   const notice = (text: string, tone: "success" | "error") =>
     setFeedback({ text, tone });
@@ -436,7 +495,7 @@ export default function Admin() {
         supabase
           .from("story_items")
           .select(
-            "id, image_url, storage_path, image_variants, description_sr, description_en, description_ru, sort_order, is_published, published_at, expires_at",
+            "id, image_url, storage_path, image_variants, sort_order, is_published, published_at, expires_at",
           )
           .order("published_at", { ascending: false }),
         supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
@@ -497,9 +556,6 @@ export default function Admin() {
         image: story.image_url,
         storagePath: story.storage_path,
         imageVariants: parseMediaVariants(story.image_variants),
-        descriptionSr: story.description_sr ?? "",
-        descriptionEn: story.description_en ?? "",
-        descriptionRu: story.description_ru ?? "",
         sortOrder: story.sort_order,
         isPublished: story.is_published,
         publishedAt: story.published_at,
@@ -620,20 +676,6 @@ export default function Admin() {
 
   const uploadStories = async (selected: readonly File[]) => {
     if (!selected.length) return;
-    const descriptionSr = storyDescriptionDraft.descriptionSr.trim();
-    const descriptionEn = storyDescriptionDraft.descriptionEn.trim();
-    const descriptionRu = storyDescriptionDraft.descriptionRu.trim();
-    if (!descriptionSr || !descriptionEn) {
-      notice(
-        tr(
-          "Унесите опис приче на српском и енглеском. Руски је необавезан.",
-          "Enter the story description in Serbian and English. Russian is optional.",
-        ),
-        "error",
-      );
-      return;
-    }
-    if (!validateCyrillic([descriptionSr])) return;
     setUploading("stories");
     setFeedback(null);
     const failures: string[] = [];
@@ -646,9 +688,6 @@ export default function Admin() {
           image_url: media.url,
           storage_path: media.path,
           image_variants: media.variants,
-          description_sr: descriptionSr,
-          description_en: descriptionEn,
-          description_ru: descriptionRu || null,
           sort_order: 0,
           is_published: true,
           published_at: now.toISOString(),
@@ -678,7 +717,6 @@ export default function Admin() {
       notice(failures.join("\n"), "error");
       return;
     }
-    setStoryDescriptionDraft(emptyStoryDescription);
     notice(
       tr(
         uploaded === 1 ? "Прича је објављена на 24 часа." : `Објављено је ${uploaded} прича на 24 часа.`,
@@ -703,41 +741,6 @@ export default function Admin() {
       notice(tr("Прича је поново објављена.", "Story republished."), "success");
       await load();
     }
-  };
-
-  const saveStoryDescription = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!editingStoryId) return;
-    const descriptionSr = storyDescriptionDraft.descriptionSr.trim();
-    const descriptionEn = storyDescriptionDraft.descriptionEn.trim();
-    const descriptionRu = storyDescriptionDraft.descriptionRu.trim();
-    if (!descriptionSr || !descriptionEn) {
-      notice(
-        tr(
-          "Унесите опис приче на српском и енглеском. Руски је необавезан.",
-          "Enter the story description in Serbian and English. Russian is optional.",
-        ),
-        "error",
-      );
-      return;
-    }
-    if (!validateCyrillic([descriptionSr])) return;
-    const { error } = await supabase
-      .from("story_items")
-      .update({
-        description_sr: descriptionSr,
-        description_en: descriptionEn,
-        description_ru: descriptionRu || null,
-      })
-      .eq("id", editingStoryId);
-    if (error) {
-      notice(error.message, "error");
-      return;
-    }
-    setEditingStoryId(null);
-    setStoryDescriptionDraft(emptyStoryDescription);
-    notice(tr("Опис приче је сачуван.", "Story description saved."), "success");
-    await load();
   };
 
   const removeStory = async (story: AdminStoryItem) => {
@@ -770,24 +773,36 @@ export default function Admin() {
   const saveCategory = async (event: React.FormEvent) => {
     event.preventDefault();
     const nameSr = categoryDraft.nameSr.trim();
-    const nameEn = categoryDraft.nameEn.trim();
-    const nameRu = categoryDraft.nameRu.trim();
-    if (!nameSr || !nameEn) {
+    if (!nameSr) {
       notice(
         tr(
-          "Унесите назив категорије на српском и енглеском. Руски је необавезан.",
-          "Enter the category name in Serbian and English. Russian is optional.",
+          "Унесите назив категорије на српском.",
+          "Enter the category name in Serbian.",
         ),
         "error",
       );
       return;
     }
     if (!validateCyrillic([nameSr])) return;
+    let translations: TranslationResult;
+    try {
+      translations = await completeTranslations([
+        {
+          key: "name",
+          sr: nameSr,
+          en: categoryDraft.nameEn,
+          ru: categoryDraft.nameRu,
+        },
+      ]);
+    } catch (error) {
+      notice(error instanceof Error ? error.message : String(error), "error");
+      return;
+    }
     const payload = {
       name: nameSr,
       name_sr: nameSr,
-      name_en: nameEn,
-      name_ru: nameRu || null,
+      name_en: translations.name.en,
+      name_ru: translations.name.ru,
       sort_order: categoryDraft.sortOrder,
       is_active: true,
     };
@@ -832,7 +847,6 @@ export default function Admin() {
     if (
       !draft.categoryId ||
       !draft.nameSr.trim() ||
-      !draft.nameEn.trim() ||
       !draft.price.trim()
     ) {
       notice(
@@ -845,27 +859,48 @@ export default function Admin() {
       return;
     }
     if (!validateCyrillic([draft.nameSr])) return;
+    let translations: TranslationResult;
+    try {
+      translations = await completeTranslations([
+        {
+          key: "name",
+          sr: draft.nameSr,
+          en: draft.nameEn,
+          ru: draft.nameRu,
+        },
+        {
+          key: "description",
+          sr: draft.descriptionSr,
+          en: draft.descriptionEn,
+          ru: draft.descriptionRu,
+        },
+        { key: "fact", sr: draft.factSr, en: draft.factEn, ru: draft.factRu },
+      ]);
+    } catch (error) {
+      notice(error instanceof Error ? error.message : String(error), "error");
+      return;
+    }
     const oldPath = editingItem
       ? (items.find((item) => item.id === draft.id)?.storagePath ?? "")
       : "";
     const payload = {
       name: draft.nameSr.trim(),
       name_sr: draft.nameSr.trim(),
-      name_en: draft.nameEn.trim(),
-      name_ru: draft.nameRu.trim() || null,
+      name_en: translations.name.en,
+      name_ru: translations.name.ru,
       category_id: draft.categoryId,
       price: draft.price.trim(),
       image_url: draft.image,
       storage_path: draft.storagePath || null,
       image_variants: draft.imageVariants,
       description: "",
-      description_sr: "",
-      description_en: "",
-      description_ru: draft.descriptionRu.trim() || null,
-      fact: null,
-      fact_sr: null,
-      fact_en: null,
-      fact_ru: draft.factRu.trim() || null,
+      description_sr: draft.descriptionSr.trim(),
+      description_en: translations.description.en,
+      description_ru: translations.description.ru,
+      fact: translations.fact.en || null,
+      fact_sr: draft.factSr.trim() || null,
+      fact_en: translations.fact.en || null,
+      fact_ru: translations.fact.ru || null,
       is_published: true,
       ...(editingItem ? {} : { sort_order: items.length }),
     };
@@ -934,19 +969,32 @@ export default function Admin() {
     event.preventDefault();
     if (
       !galleryDraft.image ||
-      !galleryDraft.altSr.trim() ||
-      !galleryDraft.altEn.trim()
+      !galleryDraft.altSr.trim()
     ) {
       notice(
         tr(
-          "Пренесите слику и унесите опис на српском и енглеском. Руски је необавезан.",
-          "Upload an image and enter Serbian and English descriptions. Russian is optional.",
+          "Пренесите слику и унесите опис на српском.",
+          "Upload an image and enter a Serbian description.",
         ),
         "error",
       );
       return;
     }
     if (!validateCyrillic([galleryDraft.altSr])) return;
+    let translations: TranslationResult;
+    try {
+      translations = await completeTranslations([
+        {
+          key: "alt",
+          sr: galleryDraft.altSr,
+          en: galleryDraft.altEn,
+          ru: galleryDraft.altRu,
+        },
+      ]);
+    } catch (error) {
+      notice(error instanceof Error ? error.message : String(error), "error");
+      return;
+    }
     const oldPath = editingGallery
       ? (galleryItems.find((item) => item.id === galleryDraft.id)
           ?.storagePath ?? "")
@@ -956,8 +1004,8 @@ export default function Admin() {
       storage_path: galleryDraft.storagePath || null,
       image_variants: galleryDraft.imageVariants,
       alt_sr: galleryDraft.altSr.trim(),
-      alt_en: galleryDraft.altEn.trim(),
-      alt_ru: galleryDraft.altRu.trim() || null,
+      alt_en: translations.alt.en,
+      alt_ru: translations.alt.ru,
       is_published: galleryDraft.isPublished,
       sort_order: galleryDraft.sortOrder,
     };
@@ -1058,9 +1106,30 @@ export default function Admin() {
       ])
     )
       return;
+    let translatedSettings = { ...settings };
+    try {
+      const translations = await completeTranslations(
+        localizedSettingNames.map((field) => ({
+          key: field,
+          sr: settings[`${field}Sr` as keyof SiteSettings] as string,
+          en: settings[`${field}En` as keyof SiteSettings] as string,
+          ru: settings[`${field}Ru` as keyof SiteSettings] as string,
+        })),
+      );
+      for (const field of localizedSettingNames) {
+        translatedSettings = {
+          ...translatedSettings,
+          [`${field}En`]: translations[field]?.en ?? "",
+          [`${field}Ru`]: translations[field]?.ru ?? "",
+        };
+      }
+    } catch (error) {
+      notice(error instanceof Error ? error.message : String(error), "error");
+      return;
+    }
     const { error } = await supabase
       .from("site_settings")
-      .upsert(settingsPayload(settings));
+      .upsert(settingsPayload(translatedSettings));
     if (error) {
       notice(error.message, "error");
       return;
@@ -1075,6 +1144,7 @@ export default function Admin() {
           "error",
         ),
       );
+    setSettings(translatedSettings);
     notice(successMessage, "success");
     await load();
   };
@@ -1120,10 +1190,6 @@ export default function Admin() {
     | "nameEn"
     | "nameRu";
   const localizedGalleryKey = `alt${suffix}` as "altSr" | "altEn" | "altRu";
-  const localizedStoryDescriptionKey = `description${suffix}` as
-    | "descriptionSr"
-    | "descriptionEn"
-    | "descriptionRu";
 
   if (sessionState === "loading")
     return (
@@ -1272,10 +1338,7 @@ export default function Admin() {
 
         {tab === "stories" && (
           <>
-            <form
-              className="admin-panel admin-panel--narrow"
-              onSubmit={saveStoryDescription}
-            >
+            <section className="admin-panel admin-panel--narrow">
               <div className="admin-panel__heading">
                 <div>
                   <h2>{tr("Нова прича", "New story")}</h2>
@@ -1286,33 +1349,8 @@ export default function Admin() {
                     )}
                   </p>
                 </div>
-                <LanguageSwitch
-                  value={contentLanguage}
-                  onChange={setContentLanguage}
-                  language={uiLanguage}
-                  completed={{
-                    sr: Boolean(storyDescriptionDraft.descriptionSr.trim()),
-                    en: Boolean(storyDescriptionDraft.descriptionEn.trim()),
-                    ru: Boolean(storyDescriptionDraft.descriptionRu.trim()),
-                  }}
-                />
               </div>
-              <div className="admin-form-grid">
-                <Field label={tr("Опис приче", "Story description")} full>
-                  <input
-                    className="admin-input"
-                    required={contentLanguage !== "ru"}
-                    value={storyDescriptionDraft[localizedStoryDescriptionKey]}
-                    onChange={(event) =>
-                      setStoryDescriptionDraft((current) => ({
-                        ...current,
-                        [localizedStoryDescriptionKey]: event.target.value,
-                      }))
-                    }
-                  />
-                </Field>
-              </div>
-              {!editingStoryId && <div className="admin-media-upload">
+              <div className="admin-media-upload">
                 <label className="admin-media-upload__trigger">
                   <span>
                     {uploading === "stories"
@@ -1339,25 +1377,8 @@ export default function Admin() {
                     "JPEG, PNG, WebP, AVIF, HEIC or HEIF · up to 10 MB per image · no photo limit",
                   )}
                 </small>
-              </div>}
-              {editingStoryId && (
-                <div className="admin-actions">
-                  <button className="admin-button">
-                    {tr("Сачувај опис", "Save description")}
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-button admin-button--secondary"
-                    onClick={() => {
-                      setEditingStoryId(null);
-                      setStoryDescriptionDraft(emptyStoryDescription);
-                    }}
-                  >
-                    {tr("Откажи", "Cancel")}
-                  </button>
-                </div>
-              )}
-            </form>
+              </div>
+            </section>
             <RecordSection
               title={tr("Објављене и истекле приче", "Published and expired stories")}
               empty={tr("Још нема објављених прича.", "No stories have been published yet.")}
@@ -1375,10 +1396,6 @@ export default function Admin() {
                           : tr("Истекло или скривено", "Expired or hidden")}
                       </strong>
                       <div className="admin-record__meta">
-                        {story[localizedStoryDescriptionKey] ||
-                          story.descriptionSr ||
-                          tr("Без описа", "No description")}
-                        <br />
                         {tr("Истиче", "Expires")}: {new Intl.DateTimeFormat(
                           uiLanguage === "sr" ? "sr-Cyrl-BA" : "en-GB",
                           { dateStyle: "medium", timeStyle: "short" },
@@ -1386,19 +1403,6 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="admin-record__actions">
-                      <button
-                        className="admin-button admin-button--secondary"
-                        onClick={() => {
-                          setEditingStoryId(story.id);
-                          setStoryDescriptionDraft({
-                            descriptionSr: story.descriptionSr,
-                            descriptionEn: story.descriptionEn,
-                            descriptionRu: story.descriptionRu,
-                          });
-                        }}
-                      >
-                        {tr("Уреди опис", "Edit description")}
-                      </button>
                       <button
                         className="admin-button admin-button--secondary"
                         onClick={() => void republishStory(story)}
@@ -1472,7 +1476,7 @@ export default function Admin() {
                 <textarea
                   className="admin-input admin-textarea"
                   value={localizedSetting("heroTitle")}
-                  placeholder={tr("Укус Москве у Бањој Луци", "A Taste of Moscow in Banja Luka")}
+                  placeholder={tr("Кафе Бабушка у Бањој Луци", "Caffe Babuska in Banja Luka")}
                   onChange={(event) =>
                     updateLocalizedSetting("heroTitle", event.target.value)
                   }
@@ -1486,7 +1490,7 @@ export default function Admin() {
                 <textarea
                   className="admin-input admin-textarea"
                   value={localizedSetting("heroDescription")}
-                  placeholder={tr("Ексклузивни напици, фини чајеви и руско гостопримство.", "Exclusive drinks, fine teas, and Russian hospitality.")}
+                  placeholder={tr("Кафа, пића и пријатна атмосфера у срцу Бање Луке.", "Coffee, drinks and a welcoming atmosphere in the heart of Banja Luka.")}
                   onChange={(event) =>
                     updateLocalizedSetting(
                       "heroDescription",
@@ -1680,7 +1684,7 @@ export default function Admin() {
                 <Field label={tr("Назив категорије", "Category name")}>
                   <input
                     className="admin-input"
-                    required={contentLanguage !== "ru"}
+                    required={contentLanguage === "sr"}
                     value={categoryDraft[localizedCategoryKey]}
                     onChange={(event) =>
                       setCategoryDraft({
@@ -1824,7 +1828,7 @@ export default function Admin() {
                 <Field label={tr("Назив пића", "Drink name")}>
                   <input
                     className="admin-input"
-                    required={contentLanguage !== "ru"}
+                    required={contentLanguage === "sr"}
                     value={draft[localizedItemKey("name")]}
                     onChange={(event) =>
                       setDraft({
@@ -1971,7 +1975,7 @@ export default function Admin() {
                 <Field label={tr("Опис слике", "Image description")} full>
                   <input
                     className="admin-input"
-                    required={contentLanguage !== "ru"}
+                    required={contentLanguage === "sr"}
                     value={galleryDraft[localizedGalleryKey]}
                     onChange={(event) =>
                       setGalleryDraft({

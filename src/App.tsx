@@ -54,9 +54,8 @@ const T = {
     nav: ["Мени", "Галерија", "Посјета"],
     nav_ids: ["menu", "gallery", "visit"],
     hero_sub_label: "Наша понуда",
-    hero_title: "Укус Москве у Бањој Луци",
-    hero_sub:
-      "Ексклузивни напици, фини чајеви и руско гостопримство — послужени с тихом, спокојном топлином.",
+    hero_title: "Кафе Бабушка у Бањој Луци",
+    hero_sub: "Кафа, пића и пријатна атмосфера у срцу Бање Луке.",
     hero_cta: "Истражи мени",
     menu_overline: "Наша понуда",
     menu_heading: "Откриј нове укусе",
@@ -99,9 +98,8 @@ const T = {
     nav: ["Menu", "Gallery", "Visit"],
     nav_ids: ["menu", "gallery", "visit"],
     hero_sub_label: "Our offer",
-    hero_title: "A Taste of Moscow in Banja Luka",
-    hero_sub:
-      "Signature beverages, fine teas, and Russian hospitality — served with quiet, unhurried warmth.",
+    hero_title: "Caffe Babuska in Banja Luka",
+    hero_sub: "Coffee, drinks and a welcoming atmosphere in the heart of Banja Luka.",
     hero_cta: "Explore the Menu",
     menu_overline: "Our Offerings",
     menu_heading: "Discover New Tastes",
@@ -144,9 +142,8 @@ const T = {
     nav: ["Меню", "Галерея", "Как нас найти"],
     nav_ids: ["menu", "gallery", "visit"],
     hero_sub_label: "Наше предложение",
-    hero_title: "Вкус Москвы в Баня-Луке",
-    hero_sub:
-      "Авторские напитки, изысканные чаи и русское гостеприимство — с тихим, душевным теплом.",
+    hero_title: "Кафе Бабушка в Баня-Луке",
+    hero_sub: "Кофе, напитки и приятная атмосфера в самом сердце Баня-Луки.",
     hero_cta: "Открыть меню",
     menu_overline: "Наше предложение",
     menu_heading: "Откройте новые вкусы",
@@ -192,7 +189,7 @@ export const PUBLIC_COPY = {
     home: "Кафе Бабушка — почетна",
     openNav: "Отвори навигацију",
     closeNav: "Затвори навигацију",
-    heroAlt: "Поглед на Москву",
+    heroAlt: "Кафић Бабушка у Бањој Луци",
     heroLoading: "Учитавање почетне слике",
     openStories: "Отвори приче уживо из кафића Бабушка",
     stories: "Уживо из кафића Бабушка — погледајте тренутну атмосферу",
@@ -202,7 +199,7 @@ export const PUBLIC_COPY = {
     home: "Café Babuska — home",
     openNav: "Open navigation",
     closeNav: "Close navigation",
-    heroAlt: "View of Moscow",
+    heroAlt: "Caffe Babuska in Banja Luka",
     heroLoading: "Loading the hero image",
     openStories: "Open live stories from Café Babuska",
     stories: "Live from Café Babuska — see the atmosphere right now",
@@ -212,7 +209,7 @@ export const PUBLIC_COPY = {
     home: "Кафе Бабушка — главная",
     openNav: "Открыть навигацию",
     closeNav: "Закрыть навигацию",
-    heroAlt: "Вид на Москву",
+    heroAlt: "Кафе Бабушка в Баня-Луке",
     heroLoading: "Загрузка главного изображения",
     openStories: "Открыть истории из кафе «Бабушка»",
     stories: "Сейчас в кафе «Бабушка» — взгляните на атмосферу",
@@ -1828,6 +1825,31 @@ function LandingPage() {
     email: siteSettings.email || "hello@cafebabuska.ba",
     socialHandle: siteSettings.socialHandle || "@cafebabuska",
   };
+  useEffect(() => {
+    const title = `Caffe Babuska | ${pageContent.heroTitle}`;
+    document.title = title;
+    const setMeta = (
+      selector: string,
+      attribute: "name" | "property",
+      content: string,
+    ) => {
+      const element = document.querySelector<HTMLMetaElement>(selector);
+      if (element) element.content = content;
+      else {
+        const meta = document.createElement("meta");
+        meta.setAttribute(attribute, selector.match(/="([^"]+)"/)?.[1] ?? "");
+        meta.content = content;
+        document.head.append(meta);
+      }
+    };
+    setMeta('meta[name="description"]', "name", pageContent.heroDescription);
+    setMeta('meta[property="og:title"]', "property", title);
+    setMeta(
+      'meta[property="og:description"]',
+      "property",
+      pageContent.heroDescription,
+    );
+  }, [lang, pageContent.heroDescription, pageContent.heroTitle]);
   const publicGallery: {
     src: string;
     alt: string;
