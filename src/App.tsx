@@ -187,15 +187,15 @@ const T = {
   },
 } as const;
 
-const PUBLIC_COPY = {
+export const PUBLIC_COPY = {
   sr: {
     home: "Кафе Бабушка — почетна",
     openNav: "Отвори навигацију",
     closeNav: "Затвори навигацију",
     heroAlt: "Поглед на Москву",
     heroLoading: "Учитавање почетне слике",
-    openStories: "Отвори Живот Бабушке",
-    stories: "Живот Бабушке",
+    openStories: "Отвори приче уживо из кафића Бабушка",
+    stories: "Уживо из кафића Бабушка — погледајте тренутну атмосферу",
     language: "Српски језик, ћирилица",
   },
   en: {
@@ -204,8 +204,8 @@ const PUBLIC_COPY = {
     closeNav: "Close navigation",
     heroAlt: "View of Moscow",
     heroLoading: "Loading the hero image",
-    openStories: "Open Babuska Life stories",
-    stories: "Babuska Life",
+    openStories: "Open live stories from Café Babuska",
+    stories: "Live from Café Babuska — see the atmosphere right now",
     language: "English language",
   },
   ru: {
@@ -214,8 +214,8 @@ const PUBLIC_COPY = {
     closeNav: "Закрыть навигацию",
     heroAlt: "Вид на Москву",
     heroLoading: "Загрузка главного изображения",
-    openStories: "Открыть истории «Жизнь Бабушки»",
-    stories: "Жизнь Бабушки",
+    openStories: "Открыть истории из кафе «Бабушка»",
+    stories: "Сейчас в кафе «Бабушка» — взгляните на атмосферу",
     language: "Русский язык",
   },
 } as const;
@@ -2193,7 +2193,6 @@ function LandingPage() {
             <p
               className="site-hero__description"
               style={{
-                color: "#75665E",
                 fontFamily: "Lora, serif",
                 fontStyle: "italic",
               }}
@@ -2215,7 +2214,9 @@ function LandingPage() {
                     alt=""
                   />
                 </span>
-                <span>{firstStoryDescription}</span>
+                <span className="site-hero__story-label">
+                  {firstStoryDescription}
+                </span>
               </button>
             )}
             <a

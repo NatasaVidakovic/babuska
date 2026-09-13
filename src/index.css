@@ -64,6 +64,17 @@ h6 {
   }
 }
 
+.site-hero__description {
+  max-width: min(90vw, 720px);
+  color: #4b332b;
+  font-size: clamp(1.05rem, 1.65vw, 1.3rem);
+  font-weight: 500;
+  line-height: 1.5;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.92),
+    0 2px 10px rgba(247, 242, 233, 0.72);
+}
+
 .site-hero__story {
   display: inline-flex;
   flex-direction: column;
@@ -114,6 +125,24 @@ h6 {
   border: 2px solid #f7f2e9;
   border-radius: inherit;
   object-fit: cover;
+}
+
+.site-hero__story-label {
+  max-width: calc(100vw - 1rem);
+  padding: 0.38rem 0.65rem;
+  overflow: hidden;
+  border: 1px solid rgba(104, 16, 15, 0.16);
+  border-radius: 999px;
+  background: rgba(247, 242, 233, 0.86);
+  box-shadow: 0 4px 14px rgba(75, 27, 20, 0.12);
+  color: #68100f;
+  font-size: clamp(0.58rem, 1.25vw, 0.78rem);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.015em;
+  text-overflow: clip;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .story-viewer {

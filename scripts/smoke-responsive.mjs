@@ -39,9 +39,18 @@ try {
       const storyImage = document
         .querySelector(".site-hero__story-ring img")
         ?.getBoundingClientRect();
-      const storyLabel = document
-        .querySelector(".site-hero__story > span:last-child")
-        ?.textContent?.trim();
+      const storyLabelElement = document.querySelector(
+        ".site-hero__story > span:last-child",
+      );
+      const storyLabel = storyLabelElement?.textContent?.trim();
+      const storyLabelRect = storyLabelElement?.getBoundingClientRect();
+      const storyLabelStyle = storyLabelElement
+        ? getComputedStyle(storyLabelElement)
+        : null;
+      const heroDescription = document.querySelector(".site-hero__description");
+      const heroDescriptionStyle = heroDescription
+        ? getComputedStyle(heroDescription)
+        : null;
       const heroOrnaments = [
         ...document.querySelectorAll(".site-hero__ornament"),
       ].map((node) => node.getBoundingClientRect());
@@ -101,6 +110,16 @@ try {
             storyImage.width <= storyRing.width &&
             storyImage.height <= storyRing.height),
         storyHasLabel: !storyRing || Boolean(storyLabel),
+        storyLabelIsSingleLine:
+          !storyLabelRect ||
+          (storyLabelStyle?.whiteSpace === "nowrap" &&
+            storyLabelRect.left >= -0.5 &&
+            storyLabelRect.right <= window.innerWidth + 0.5),
+        heroDescriptionIsReadable:
+          !heroDescriptionStyle ||
+          (Number.parseFloat(heroDescriptionStyle.fontSize) >= 16 &&
+            Number.parseInt(heroDescriptionStyle.fontWeight, 10) >= 500 &&
+            heroDescriptionStyle.textShadow !== "none"),
       };
     });
     if (result.overflow > 1)
@@ -150,6 +169,14 @@ try {
     if (!result.storyHasLabel)
       throw new Error(
         `${viewport.width}x${viewport.height}: story thumbnail has no description or fallback label`,
+      );
+    if (!result.storyLabelIsSingleLine)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: story description is not a viewport-safe single line`,
+      );
+    if (!result.heroDescriptionIsReadable)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: hero description lacks the required size, weight, or contrast treatment`,
       );
 
     await page.locator(".site-section--book").scrollIntoViewIfNeeded();
