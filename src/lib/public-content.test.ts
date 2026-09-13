@@ -57,6 +57,9 @@ const rawBootstrap = {
       image_url: "https://cdn.test/story.webp",
       storage_path: "stories/story-current/original.jpg",
       image_variants: {},
+      description_sr: "Ново у понуди",
+      description_en: "New on offer",
+      description_ru: "Новинка в меню",
       sort_order: 0,
       published_at: "2099-01-02T00:00:00.000Z",
       expires_at: "2099-01-03T00:00:00.000Z",
@@ -98,6 +101,9 @@ describe("public content bootstrap", () => {
     expect(result.items[0]?.factEn).toBe("");
     expect(result.settings.heroImageVariants["640"]?.width).toBe(640);
     expect(result.stories[0]?.id).toBe("story-current");
+    expect(result.stories[0]?.descriptionSr).toBe("Ново у понуди");
+    expect(result.stories[0]?.descriptionEn).toBe("New on offer");
+    expect(result.stories[0]?.descriptionRu).toBe("Новинка в меню");
   });
 
   it("ignores malformed and old cache records", () => {

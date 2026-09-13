@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { AdminStoryItem, Lang } from "../lib/content";
+import { localizedText, type AdminStoryItem, type Lang } from "../lib/content";
 import { mediaSrcSet } from "../lib/media-variants";
 
 type StoryViewerProps = {
@@ -73,6 +73,13 @@ export default function StoryViewer({
 
   if (!story) return null;
   const srcSet = mediaSrcSet(story.imageVariants);
+  const description = localizedText(
+    story.descriptionSr,
+    story.descriptionEn,
+    story.descriptionRu,
+    language,
+    true,
+  );
   return (
     <div
       className="story-viewer"
@@ -112,6 +119,11 @@ export default function StoryViewer({
           sizes="(max-width: 768px) 100vw, 80vw"
           alt=""
         />
+        {description && (
+          <figcaption className="story-viewer__caption">
+            {description}
+          </figcaption>
+        )}
       </figure>
       <button
         type="button"

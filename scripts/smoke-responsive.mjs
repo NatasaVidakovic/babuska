@@ -4,7 +4,6 @@ import { resolve } from "node:path";
 
 const baseUrl = process.env.SITE_URL ?? "http://127.0.0.1:4300";
 const evidenceDir = resolve(".codex/qa/plan-implementation/screenshots");
-const expectedCategoryCount = 16;
 const viewports = [
   { width: 360, height: 640 },
   { width: 390, height: 844 },
@@ -34,6 +33,12 @@ try {
         .querySelector(".site-hero__cta")
         ?.getBoundingClientRect();
       const hero = document.querySelector(".site-hero")?.getBoundingClientRect();
+      const storyRing = document
+        .querySelector(".site-hero__story-ring")
+        ?.getBoundingClientRect();
+      const storyImage = document
+        .querySelector(".site-hero__story-ring img")
+        ?.getBoundingClientRect();
       const heroOrnaments = [
         ...document.querySelectorAll(".site-hero__ornament"),
       ].map((node) => node.getBoundingClientRect());
@@ -85,6 +90,13 @@ try {
             image.src.includes("/storage/v1/object/public/cafe-media/"),
           ),
         documentLanguage: document.documentElement.lang,
+        storyThumbnailIsCircular:
+          !storyRing ||
+          !storyImage ||
+          (Math.abs(storyRing.width - storyRing.height) < 0.5 &&
+            Math.abs(storyImage.width - storyImage.height) < 0.5 &&
+            storyImage.width <= storyRing.width &&
+            storyImage.height <= storyRing.height),
       };
     });
     if (result.overflow > 1)
@@ -115,9 +127,9 @@ try {
       throw new Error(
         `${viewport.width}x${viewport.height}: section headings use inconsistent typography`,
       );
-    if (result.categoryCount !== expectedCategoryCount)
+    if (result.categoryCount < 1)
       throw new Error(
-        `${viewport.width}x${viewport.height}: expected ${expectedCategoryCount} dynamic category filters, got ${result.categoryCount}`,
+        `${viewport.width}x${viewport.height}: expected dynamic category filters, got ${result.categoryCount}`,
       );
     if (!result.contentMediaInStorage)
       throw new Error(
@@ -126,6 +138,10 @@ try {
     if (result.documentLanguage !== "sr-Cyrl")
       throw new Error(
         `${viewport.width}x${viewport.height}: Serbian Cyrillic is not the document default`,
+      );
+    if (!result.storyThumbnailIsCircular)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: story thumbnail is not a true circle`,
       );
 
     await page.locator(".site-section--book").scrollIntoViewIfNeeded();

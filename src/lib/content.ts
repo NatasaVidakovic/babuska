@@ -45,6 +45,9 @@ export type AdminStoryItem = {
   image: string;
   storagePath: string;
   imageVariants: MediaVariants;
+  descriptionSr: string;
+  descriptionEn: string;
+  descriptionRu: string;
   sortOrder: number;
   isPublished: boolean;
   publishedAt: string;

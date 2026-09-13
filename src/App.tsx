@@ -1846,6 +1846,15 @@ function LandingPage() {
   const activeStories = stories.filter(
     (story) => Date.parse(story.expiresAt) > Date.now() && story.isPublished,
   );
+  const firstStoryDescription = activeStories[0]
+    ? localizedText(
+        activeStories[0].descriptionSr,
+        activeStories[0].descriptionEn,
+        activeStories[0].descriptionRu,
+        lang,
+        true,
+      ) ?? PUBLIC_COPY[lang].stories
+    : PUBLIC_COPY[lang].stories;
   const stableHeroSources = [640, 1280, 1920]
     .map((width) => ({
       width,
@@ -2195,7 +2204,7 @@ function LandingPage() {
               <button
                 type="button"
                 className="site-hero__story"
-                aria-label={PUBLIC_COPY[lang].openStories}
+                aria-label={`${PUBLIC_COPY[lang].openStories}: ${firstStoryDescription}`}
                 onClick={() => setStoryViewerIndex(0)}
               >
                 <span className="site-hero__story-ring">
@@ -2206,7 +2215,7 @@ function LandingPage() {
                     alt=""
                   />
                 </span>
-                <span>{PUBLIC_COPY[lang].stories}</span>
+                <span>{firstStoryDescription}</span>
               </button>
             )}
             <a

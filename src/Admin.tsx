@@ -29,7 +29,16 @@ import { isSupabaseConfigured, supabase } from "./lib/supabase";
 type SessionState = "loading" | "signed-out" | "denied" | "ready";
 type Feedback = { text: string; tone: "success" | "error" } | null;
 type ContentLanguage = "sr" | "en" | "ru";
+type StoryDescriptionDraft = Pick<
+  AdminStoryItem,
+  "descriptionSr" | "descriptionEn" | "descriptionRu"
+>;
 const CONTENT_SUFFIX = { sr: "Sr", en: "En", ru: "Ru" } as const;
+const emptyStoryDescription: StoryDescriptionDraft = {
+  descriptionSr: "",
+  descriptionEn: "",
+  descriptionRu: "",
+};
 
 const emptyItem: AdminMenuItem = {
   id: "",
@@ -347,6 +356,9 @@ export default function Admin() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [galleryItems, setGalleryItems] = useState<AdminGalleryItem[]>([]);
   const [stories, setStories] = useState<AdminStoryItem[]>([]);
+  const [storyDescriptionDraft, setStoryDescriptionDraft] =
+    useState<StoryDescriptionDraft>(emptyStoryDescription);
+  const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
   const [settings, setSettings] = useState<SiteSettings>(emptySettings);
   const [savedHeroPath, setSavedHeroPath] = useState("");
   const [draft, setDraft] = useState<AdminMenuItem>(emptyItem);
@@ -424,7 +436,7 @@ export default function Admin() {
         supabase
           .from("story_items")
           .select(
-            "id, image_url, storage_path, image_variants, sort_order, is_published, published_at, expires_at",
+            "id, image_url, storage_path, image_variants, description_sr, description_en, description_ru, sort_order, is_published, published_at, expires_at",
           )
           .order("published_at", { ascending: false }),
         supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
@@ -485,6 +497,9 @@ export default function Admin() {
         image: story.image_url,
         storagePath: story.storage_path,
         imageVariants: parseMediaVariants(story.image_variants),
+        descriptionSr: story.description_sr ?? "",
+        descriptionEn: story.description_en ?? "",
+        descriptionRu: story.description_ru ?? "",
         sortOrder: story.sort_order,
         isPublished: story.is_published,
         publishedAt: story.published_at,
@@ -605,6 +620,20 @@ export default function Admin() {
 
   const uploadStories = async (selected: readonly File[]) => {
     if (!selected.length) return;
+    const descriptionSr = storyDescriptionDraft.descriptionSr.trim();
+    const descriptionEn = storyDescriptionDraft.descriptionEn.trim();
+    const descriptionRu = storyDescriptionDraft.descriptionRu.trim();
+    if (!descriptionSr || !descriptionEn) {
+      notice(
+        tr(
+          "Унесите опис приче на српском и енглеском. Руски је необавезан.",
+          "Enter the story description in Serbian and English. Russian is optional.",
+        ),
+        "error",
+      );
+      return;
+    }
+    if (!validateCyrillic([descriptionSr])) return;
     setUploading("stories");
     setFeedback(null);
     const failures: string[] = [];
@@ -617,6 +646,9 @@ export default function Admin() {
           image_url: media.url,
           storage_path: media.path,
           image_variants: media.variants,
+          description_sr: descriptionSr,
+          description_en: descriptionEn,
+          description_ru: descriptionRu || null,
           sort_order: 0,
           is_published: true,
           published_at: now.toISOString(),
@@ -646,6 +678,7 @@ export default function Admin() {
       notice(failures.join("\n"), "error");
       return;
     }
+    setStoryDescriptionDraft(emptyStoryDescription);
     notice(
       tr(
         uploaded === 1 ? "Прича је објављена на 24 часа." : `Објављено је ${uploaded} прича на 24 часа.`,
@@ -670,6 +703,41 @@ export default function Admin() {
       notice(tr("Прича је поново објављена.", "Story republished."), "success");
       await load();
     }
+  };
+
+  const saveStoryDescription = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingStoryId) return;
+    const descriptionSr = storyDescriptionDraft.descriptionSr.trim();
+    const descriptionEn = storyDescriptionDraft.descriptionEn.trim();
+    const descriptionRu = storyDescriptionDraft.descriptionRu.trim();
+    if (!descriptionSr || !descriptionEn) {
+      notice(
+        tr(
+          "Унесите опис приче на српском и енглеском. Руски је необавезан.",
+          "Enter the story description in Serbian and English. Russian is optional.",
+        ),
+        "error",
+      );
+      return;
+    }
+    if (!validateCyrillic([descriptionSr])) return;
+    const { error } = await supabase
+      .from("story_items")
+      .update({
+        description_sr: descriptionSr,
+        description_en: descriptionEn,
+        description_ru: descriptionRu || null,
+      })
+      .eq("id", editingStoryId);
+    if (error) {
+      notice(error.message, "error");
+      return;
+    }
+    setEditingStoryId(null);
+    setStoryDescriptionDraft(emptyStoryDescription);
+    notice(tr("Опис приче је сачуван.", "Story description saved."), "success");
+    await load();
   };
 
   const removeStory = async (story: AdminStoryItem) => {
@@ -1052,6 +1120,10 @@ export default function Admin() {
     | "nameEn"
     | "nameRu";
   const localizedGalleryKey = `alt${suffix}` as "altSr" | "altEn" | "altRu";
+  const localizedStoryDescriptionKey = `description${suffix}` as
+    | "descriptionSr"
+    | "descriptionEn"
+    | "descriptionRu";
 
   if (sessionState === "loading")
     return (
@@ -1200,7 +1272,10 @@ export default function Admin() {
 
         {tab === "stories" && (
           <>
-            <section className="admin-panel admin-panel--narrow">
+            <form
+              className="admin-panel admin-panel--narrow"
+              onSubmit={saveStoryDescription}
+            >
               <div className="admin-panel__heading">
                 <div>
                   <h2>{tr("Нова прича", "New story")}</h2>
@@ -1211,8 +1286,33 @@ export default function Admin() {
                     )}
                   </p>
                 </div>
+                <LanguageSwitch
+                  value={contentLanguage}
+                  onChange={setContentLanguage}
+                  language={uiLanguage}
+                  completed={{
+                    sr: Boolean(storyDescriptionDraft.descriptionSr.trim()),
+                    en: Boolean(storyDescriptionDraft.descriptionEn.trim()),
+                    ru: Boolean(storyDescriptionDraft.descriptionRu.trim()),
+                  }}
+                />
               </div>
-              <div className="admin-media-upload">
+              <div className="admin-form-grid">
+                <Field label={tr("Опис приче", "Story description")} full>
+                  <input
+                    className="admin-input"
+                    required={contentLanguage !== "ru"}
+                    value={storyDescriptionDraft[localizedStoryDescriptionKey]}
+                    onChange={(event) =>
+                      setStoryDescriptionDraft((current) => ({
+                        ...current,
+                        [localizedStoryDescriptionKey]: event.target.value,
+                      }))
+                    }
+                  />
+                </Field>
+              </div>
+              {!editingStoryId && <div className="admin-media-upload">
                 <label className="admin-media-upload__trigger">
                   <span>
                     {uploading === "stories"
@@ -1239,8 +1339,25 @@ export default function Admin() {
                     "JPEG, PNG, WebP, AVIF, HEIC or HEIF · up to 10 MB per image · no photo limit",
                   )}
                 </small>
-              </div>
-            </section>
+              </div>}
+              {editingStoryId && (
+                <div className="admin-actions">
+                  <button className="admin-button">
+                    {tr("Сачувај опис", "Save description")}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-button admin-button--secondary"
+                    onClick={() => {
+                      setEditingStoryId(null);
+                      setStoryDescriptionDraft(emptyStoryDescription);
+                    }}
+                  >
+                    {tr("Откажи", "Cancel")}
+                  </button>
+                </div>
+              )}
+            </form>
             <RecordSection
               title={tr("Објављене и истекле приче", "Published and expired stories")}
               empty={tr("Још нема објављених прича.", "No stories have been published yet.")}
@@ -1258,6 +1375,10 @@ export default function Admin() {
                           : tr("Истекло или скривено", "Expired or hidden")}
                       </strong>
                       <div className="admin-record__meta">
+                        {story[localizedStoryDescriptionKey] ||
+                          story.descriptionSr ||
+                          tr("Без описа", "No description")}
+                        <br />
                         {tr("Истиче", "Expires")}: {new Intl.DateTimeFormat(
                           uiLanguage === "sr" ? "sr-Cyrl-BA" : "en-GB",
                           { dateStyle: "medium", timeStyle: "short" },
@@ -1265,6 +1386,19 @@ export default function Admin() {
                       </div>
                     </div>
                     <div className="admin-record__actions">
+                      <button
+                        className="admin-button admin-button--secondary"
+                        onClick={() => {
+                          setEditingStoryId(story.id);
+                          setStoryDescriptionDraft({
+                            descriptionSr: story.descriptionSr,
+                            descriptionEn: story.descriptionEn,
+                            descriptionRu: story.descriptionRu,
+                          });
+                        }}
+                      >
+                        {tr("Уреди опис", "Edit description")}
+                      </button>
                       <button
                         className="admin-button admin-button--secondary"
                         onClick={() => void republishStory(story)}
