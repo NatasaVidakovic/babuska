@@ -110,6 +110,10 @@ try {
             storyImage.width <= storyRing.width &&
             storyImage.height <= storyRing.height),
         storyHasLabel: !storyRing || Boolean(storyLabel),
+        storyHasExpectedSerbianLabel:
+          !storyRing ||
+          storyLabel ===
+            "Уживо из кафића Бабушка — погледајте тренутну атмосферу",
         storyLabelIsSingleLine:
           !storyLabelRect ||
           (storyLabelStyle?.whiteSpace === "nowrap" &&
@@ -175,6 +179,10 @@ try {
     if (!result.storyHasLabel)
       throw new Error(
         `${viewport.width}x${viewport.height}: story thumbnail has no description or fallback label`,
+      );
+    if (!result.storyHasExpectedSerbianLabel)
+      throw new Error(
+        `${viewport.width}x${viewport.height}: story thumbnail does not use the approved Serbian live label`,
       );
     if (!result.storyLabelIsSingleLine)
       throw new Error(
