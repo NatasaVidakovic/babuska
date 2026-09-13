@@ -51,6 +51,14 @@ npm run backfill:media-variants
 
 The backfill is authenticated and idempotent. It keeps original uploads, writes immutable menu/gallery derivatives, and refreshes only the stable `hero/current-*.webp` objects.
 
+To validate the canonical 105-item Canva menu without a database write, run:
+
+```powershell
+npm run sync:canva-menu
+```
+
+The command defaults to a dry run. For an approved production update, provide production administrator variables only in the terminal environment and use `node scripts/sync-canva-menu.mjs --apply`. It updates names, prices, category order, and translations while preserving already uploaded item images.
+
 ## Validation
 
 ```powershell

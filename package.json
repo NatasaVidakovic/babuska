@@ -20,6 +20,7 @@
     "seed:demo": "node --env-file=.env.local scripts/seed-demo-content.mjs && node --env-file=.env.local scripts/backfill-media-variants.mjs --refresh-hero",
     "migrate:media": "node --env-file=.env.local scripts/migrate-content-media.mjs",
     "backfill:media-variants": "node --env-file=.env.local scripts/backfill-media-variants.mjs",
+    "sync:canva-menu": "node --env-file=.env.local scripts/sync-canva-menu.mjs",
     "setup:local-admin": "node --env-file=.env.local scripts/setup-local-admin.mjs",
     "preview": "vite preview --host 0.0.0.0 --port 4300",
     "supabase:start": "supabase start",

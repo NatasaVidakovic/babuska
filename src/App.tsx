@@ -166,6 +166,7 @@ type CategoryIconKind =
   | "water"
   | "beer"
   | "cider"
+  | "gelato"
   | "rakija"
   | "spirits";
 
@@ -174,7 +175,8 @@ function categoryIconKind(category: string): CategoryIconKind {
   if (/(коктел|cocktail)/.test(name)) return "cocktail";
   if (/(вод[аеоиу]|water)/.test(name)) return "water";
   if (/(сок|juice|хладн|cold)/.test(name)) return "juice";
-  if (/(цидер|cider)/.test(name)) return "cider";
+  if (/(цидер|сајдер|cider)/.test(name)) return "cider";
+  if (/(сладолед|гелато|gelato|ice cream)/.test(name)) return "gelato";
   if (/(пиво|beer)/.test(name)) return "beer";
   if (/(чај|tea|инфуз|infusion)/.test(name)) return "tea";
   if (/(ракиј|schnapps)/.test(name)) return "rakija";
@@ -271,6 +273,14 @@ function CategoryFallbackIcon({ category }: { category: string }) {
           <path d="M12 11.7v5.6M8.8 19h6.4" />
           <path d="M9.1 8.6c1.4.6 4.4.6 5.8 0" />
           <path d="m16.6 4 3.4 3.4M18 5.4l1.5-1.5M18.4 7.3l1.9.1" />
+        </>
+      )}
+      {kind === "gelato" && (
+        <>
+          <path d="M8.2 12.1h7.6L12 20 8.2 12.1Z" />
+          <path d="M8.1 12.1h7.8M10.1 16.1h3.8M9.2 14.1h5.6" opacity="0.7" />
+          <path d="M7.5 10.9a2.5 2.5 0 1 1 4.2-1.8 2.5 2.5 0 1 1 4.8 1.8" />
+          <path d="M8.1 10.9a2.1 2.1 0 0 1 3.8-1.2 2.1 2.1 0 0 1 4.1 1.2" fill="currentColor" stroke="none" opacity="0.14" />
         </>
       )}
       {kind === "rakija" && (
