@@ -316,6 +316,13 @@ function CategoryFallbackIcon({ category }: { category: string }) {
           <path d="m16.6 4 3.4 3.4M18 5.4l1.5-1.5M18.4 7.3l1.9.1" />
         </>
       )}
+      {kind === "dessert" && (
+        <>
+          <path d="M5 11h14v8H5zM5 15h14M5 11l9-6 5 6" />
+          <path d="M9 11v2M14 11v2M14 5V3" />
+          <circle cx="14" cy="3" r="1" fill="currentColor" stroke="none" />
+        </>
+      )}
       {kind === "gelato" && (
         <>
           <path d="M8.2 12.1h7.6L12 20 8.2 12.1Z" />

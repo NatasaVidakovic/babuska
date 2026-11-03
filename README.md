@@ -59,6 +59,8 @@ npm run sync:canva-menu
 
 The command defaults to a dry run. For an approved production update, provide production administrator variables only in the terminal environment and use `node scripts/sync-canva-menu.mjs --apply`. It updates names, prices, category order, and translations while preserving already uploaded item images.
 
+The three supplied dessert photographs are retained in `public/images/desserts/`, with 480 px and 960 px WebP variants. Validate the attachment-to-dessert mapping without database writes using `npm run sync:dessert-images`. For the current isolated local review use `npm run sync:dessert-images -- --preview`; this updates only the loopback demo on port 4303. After the dessert migration and an approved publication, run `npm run sync:dessert-images -- --apply` with the intended Supabase administrator environment to upload the photographs to Storage and update only the matching dessert image fields. The command preserves prices, names, order and other uploaded media.
+
 ## Validation
 
 ```powershell

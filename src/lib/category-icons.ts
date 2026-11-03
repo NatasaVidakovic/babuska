@@ -7,6 +7,7 @@ export type CategoryIconKind =
   | "water"
   | "beer"
   | "cider"
+  | "dessert"
   | "gelato"
   | "rakija"
   | "spirits"
@@ -14,6 +15,7 @@ export type CategoryIconKind =
 
 export function categoryIconKind(category: string): CategoryIconKind {
   const name = category.toLocaleLowerCase();
+  if (/(десерт|dessert|колач|торт|cake)/.test(name)) return "dessert";
   if (/(коктел|коктейл|cocktail)/.test(name)) return "cocktail";
   if (/(вод[аеоиу]|вода|water)/.test(name)) return "water";
   if (/(сок|juice|хладн|холодн|cold)/.test(name)) return "juice";

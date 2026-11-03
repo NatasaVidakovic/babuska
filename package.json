@@ -25,7 +25,9 @@
     "preview": "vite preview --host 0.0.0.0 --port 4300",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "supabase:reset": "supabase db reset"
+    "supabase:reset": "supabase db reset",
+    "smoke:admin-editor": "node scripts/smoke-admin-editor.mjs",
+    "sync:dessert-images": "node --env-file=.env.local scripts/sync-dessert-images.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

@@ -1,0 +1,207 @@
+/* The editor keeps Babuska's burgundy, parchment and existing typefaces. */
+.admin-panel form,
+form.admin-panel {
+  scroll-margin-top: 1.5rem;
+}
+.admin-translation-summary {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--cafe-border);
+  border-radius: var(--cafe-radius);
+  background: rgba(255, 253, 252, 0.65);
+}
+.admin-translation-summary > strong {
+  font-size: 0.88rem;
+}
+.admin-translation-summary > p {
+  max-width: 65rem;
+  margin: 0;
+  color: var(--cafe-muted);
+  font-size: 0.76rem;
+  line-height: 1.65;
+}
+.admin-translation-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.admin-record__content > .admin-translation-badges {
+  margin-top: 0.55rem;
+}
+.admin-translation-badge {
+  padding: 0.28rem 0.55rem;
+  border: 1px solid #d8b7a2;
+  border-radius: 5px;
+  color: #7b3d20;
+  background: #faeee2;
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+.admin-translation-badge[data-complete="true"] {
+  border-color: #d4dfd0;
+  color: #385936;
+  background: #eef3eb;
+}
+.admin-translation-fields {
+  display: grid;
+  gap: 1.25rem;
+}
+.admin-translated-field {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0.9rem 1.15rem 1.15rem;
+  border: 1px solid var(--cafe-border);
+  border-radius: var(--cafe-radius);
+  gap: 0.9rem;
+}
+.admin-translated-field > legend {
+  max-width: 100%;
+  padding-inline: 0.35rem;
+  font-family: "Philosopher", serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.admin-translated-field > legend > span {
+  display: inline-block;
+  margin-left: 0.5rem;
+  color: var(--cafe-muted);
+  font-family: "Lora", serif;
+  font-size: 0.67rem;
+  font-weight: 400;
+}
+.admin-translated-field__hint {
+  margin: 0;
+  color: var(--cafe-muted);
+  font-size: 0.74rem;
+}
+.admin-translated-field__row {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+}
+.admin-translated-field__row > label {
+  color: var(--cafe-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.admin-translated-field__row > small {
+  color: #7b3d20;
+  font-size: 0.7rem;
+}
+.admin-translated-field__row > small[data-invalid="true"] {
+  color: var(--cafe-danger);
+}
+.admin-input[data-incomplete="true"] {
+  box-shadow: inset 0 0 0 1px #c99c79;
+}
+.admin-input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 2px var(--cafe-danger);
+}
+.admin-translated-field .admin-textarea {
+  min-height: 78px;
+}
+.admin-list-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 0.9rem;
+  margin-block: 2.5rem 1.25rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--cafe-border);
+}
+.admin-list-tools > small {
+  grid-column: 1 / -1;
+  color: var(--cafe-muted);
+  font-size: 0.73rem;
+}
+.admin-actions--save {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding-block: 1rem;
+  background: var(--cafe-canvas);
+  border-top: 1px solid var(--cafe-border);
+}
+.admin-status--floating {
+  position: fixed;
+  z-index: 100;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  width: min(32rem, calc(100vw - 2rem));
+  max-height: min(45vh, 22rem);
+  overflow-y: auto;
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--cafe-border);
+  border-left: 4px solid var(--cafe-success);
+  border-radius: 10px;
+  background: var(--cafe-surface);
+  box-shadow: 0 10px 40px rgba(66, 39, 27, 0.2);
+  white-space: pre-line;
+}
+.admin-status[data-tone="warning"] {
+  border-left-color: #9b602b;
+  color: #75421c;
+  background: #fff8eb;
+}
+.admin-status--floating strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+}
+.admin-status--floating p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.admin-status__icon {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+.admin-status__close {
+  display: grid;
+  min-width: 32px;
+  min-height: 32px;
+  margin: -0.3rem -0.3rem 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: inherit;
+  background: transparent;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.admin-status__close:hover {
+  background: var(--cafe-canvas);
+}
+.admin-shell button:focus-visible,
+.admin-shell a:focus-visible {
+  outline: 2px solid var(--cafe-red);
+  outline-offset: 3px;
+}
+@media (max-width: 680px) {
+  .admin-translated-field {
+    padding: 0.75rem;
+  }
+  .admin-translated-field > legend > span {
+    display: block;
+    margin-left: 0;
+  }
+  .admin-list-tools {
+    grid-template-columns: 1fr;
+  }
+  .admin-record__actions {
+    margin-left: 0;
+  }
+  .admin-status--floating {
+    max-height: 35vh;
+  }
+}

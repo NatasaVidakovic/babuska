@@ -36,25 +36,25 @@ export const ADMIN_TABS = {
   categories: {
     sr: [
       "Категорије",
-      "Категорије пића",
+      "Категорије менија",
       "Категорије одређују редослијед и филтере на јавној страници.",
     ],
     en: [
       "Categories",
-      "Drink categories",
+      "Menu categories",
       "Categories determine the public filters and menu order.",
     ],
   },
   menu: {
     sr: [
-      "Пића",
-      "Пића у менију",
-      "Додајте пиће у категорију; слика и опис су необавезни.",
+      "Мени",
+      "Ставке менија",
+      "Додајте и уредите пића и десерте, са преводима на сва три језика.",
     ],
     en: [
-      "Drinks",
-      "Menu drinks",
-      "Add a drink to a category; its image and description are optional.",
+      "Menu",
+      "Menu items",
+      "Add and edit drinks and desserts, with translations in all three languages.",
     ],
   },
   gallery: {

@@ -2,6 +2,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "./assets/brand/logo-babuska.webp";
 import {
+  TranslatedField,
+  TranslationSummary,
+} from "./components/AdminTranslationFields";
+import {
+  CONTENT_SUFFIX,
+  translationIssues,
+  type TranslationEntry,
+} from "./lib/admin-translations";
+import {
   ADMIN_TABS,
   adminText,
   type AdminLanguage,
@@ -27,16 +36,10 @@ import { mediaVariantPaths, parseMediaVariants } from "./lib/media-variants";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 
 type SessionState = "loading" | "signed-out" | "denied" | "ready";
-type Feedback = { text: string; tone: "success" | "error" } | null;
-type ContentLanguage = "sr" | "en" | "ru";
-type TranslationEntry = {
-  key: string;
-  sr: string;
-  en: string;
-  ru: string;
-};
+type FeedbackTone = "success" | "error" | "warning";
+type Feedback = { text: string; tone: FeedbackTone } | null;
+
 type TranslationResult = Record<string, Pick<TranslationEntry, "en" | "ru">>;
-const CONTENT_SUFFIX = { sr: "Sr", en: "En", ru: "Ru" } as const;
 
 const emptyItem: AdminMenuItem = {
   id: "",
@@ -154,37 +157,6 @@ function Field({
       )}
       {control}
       {hint && <small>{hint}</small>}
-    </div>
-  );
-}
-
-function LanguageSwitch({
-  value,
-  onChange,
-  language,
-  completed,
-}: {
-  value: ContentLanguage;
-  onChange: (value: ContentLanguage) => void;
-  language: AdminLanguage;
-  completed?: Partial<Record<ContentLanguage, boolean>>;
-}) {
-  return (
-    <div
-      className="admin-language-switch"
-      aria-label={adminText(language, "Језик садржаја", "Content language")}
-    >
-      {(["sr", "en", "ru"] as const).map((option) => (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={value === option}
-          onClick={() => onChange(option)}
-        >
-          {{ sr: "СР", en: "EN", ru: "РУ" }[option]}
-          {completed?.[option] ? " ✓" : ""}
-        </button>
-      ))}
     </div>
   );
 }
@@ -310,6 +282,37 @@ const localizedSettingNames = [
   "footerCopyright",
 ] as const;
 
+const settingLabels = {
+  heroTitle: { sr: "Наслов на почетној", en: "Homepage title" },
+  heroDescription: { sr: "Опис на почетној", en: "Homepage description" },
+  heroCta: { sr: "Текст дугмета", en: "Button text" },
+  footerAddressHeading: { sr: "Наслов адресе", en: "Address heading" },
+  footerAddressLine1: {
+    sr: "Адреса · улица и број",
+    en: "Address · street and number",
+  },
+  footerAddressLine2: { sr: "Адреса · град", en: "Address · city" },
+  footerAddressLine3: { sr: "Адреса · држава", en: "Address · country" },
+  footerHoursHeading: {
+    sr: "Наслов радног времена",
+    en: "Opening hours heading",
+  },
+  footerHoursLine1: {
+    sr: "Радно вријеме · први ред",
+    en: "Opening hours · first line",
+  },
+  footerHoursLine2: {
+    sr: "Радно вријеме · други ред",
+    en: "Opening hours · second line",
+  },
+  footerHoursLine3: {
+    sr: "Радно вријеме · трећи ред",
+    en: "Opening hours · third line",
+  },
+  footerContactHeading: { sr: "Наслов контакта", en: "Contact heading" },
+  footerCopyright: { sr: "Ауторска права", en: "Copyright" },
+} as const;
+
 function settingsFromRow(row: Record<string, unknown> | null): SiteSettings {
   const output = { ...emptySettings };
   for (const [key, column] of settingFields)
@@ -361,11 +364,18 @@ export default function Admin() {
   const navigate = useNavigate();
   const [sessionState, setSessionState] = useState<SessionState>("loading");
   const [uiLanguage, setUiLanguage] = useState<AdminLanguage>("sr");
-  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>("sr");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [feedback, setFeedback] = useState<Feedback>(null);
-  const [tab, setTab] = useState<AdminTab>("stories");
+  const [saving, setSaving] = useState(false);
+  const [menuSearch, setMenuSearch] = useState("");
+  const [menuCategoryFilter, setMenuCategoryFilter] = useState("");
+  const [tab, setTab] = useState<AdminTab>(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    return requested && Object.prototype.hasOwnProperty.call(ADMIN_TABS, requested)
+      ? (requested as AdminTab)
+      : "stories";
+  });
   const [items, setItems] = useState<AdminMenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [galleryItems, setGalleryItems] = useState<AdminGalleryItem[]>([]);
@@ -410,16 +420,20 @@ export default function Admin() {
     ) as TranslationResult;
     if (!missing.length) return existing;
 
-    const { data, error } = await supabase.functions.invoke(
-      "translate-content",
-      { body: { entries: missing.map(({ key, sr }) => ({ key, sr })) } },
-    );
+    let response;
+    try {
+      response = await supabase.functions.invoke("translate-content", {
+        body: { entries: missing.map(({ key, sr }) => ({ key, sr })) },
+      });
+    } catch {
+      return existing;
+    }
+    const { data, error } = response;
     // A translation is optional. Saving Serbian content must still work if the
     // administrator has not configured the translation service yet.
     if (error) return existing;
     const translations = data?.translations as
-      | { key?: string; en?: string; ru?: string }[]
-      | undefined;
+      { key?: string; en?: string; ru?: string }[] | undefined;
     if (!Array.isArray(translations)) return existing;
     for (const entry of missing) {
       const translated = translations.find((item) => item.key === entry.key);
@@ -431,7 +445,7 @@ export default function Admin() {
     }
     return existing;
   };
-  const notice = (text: string, tone: "success" | "error") =>
+  const notice = (text: string, tone: FeedbackTone) =>
     setFeedback({ text, tone });
 
   const persistedPaths = useMemo(
@@ -464,32 +478,37 @@ export default function Admin() {
   };
 
   const load = async () => {
-    const [categoriesResult, itemsResult, galleryResult, storiesResult, settingsResult] =
-      await Promise.all([
-        supabase
-          .from("menu_categories")
-          .select("id, name_sr, name_en, name_ru, sort_order")
-          .order("sort_order"),
-        supabase
-          .from("menu_items")
-          .select(
-            "id, name_sr, name_en, name_ru, category_id, price, image_url, storage_path, image_variants, description_sr, description_en, description_ru, fact_sr, fact_en, fact_ru",
-          )
-          .order("sort_order"),
-        supabase
-          .from("gallery_items")
-          .select(
-            "id, image_url, storage_path, image_variants, alt_sr, alt_en, alt_ru, is_published, sort_order",
-          )
-          .order("sort_order"),
-        supabase
-          .from("story_items")
-          .select(
-            "id, image_url, storage_path, image_variants, sort_order, is_published, published_at, expires_at",
-          )
-          .order("published_at", { ascending: false }),
-        supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
-      ]);
+    const [
+      categoriesResult,
+      itemsResult,
+      galleryResult,
+      storiesResult,
+      settingsResult,
+    ] = await Promise.all([
+      supabase
+        .from("menu_categories")
+        .select("id, name_sr, name_en, name_ru, sort_order")
+        .order("sort_order"),
+      supabase
+        .from("menu_items")
+        .select(
+          "id, name_sr, name_en, name_ru, category_id, price, image_url, storage_path, image_variants, description_sr, description_en, description_ru, fact_sr, fact_en, fact_ru",
+        )
+        .order("sort_order"),
+      supabase
+        .from("gallery_items")
+        .select(
+          "id, image_url, storage_path, image_variants, alt_sr, alt_en, alt_ru, is_published, sort_order",
+        )
+        .order("sort_order"),
+      supabase
+        .from("story_items")
+        .select(
+          "id, image_url, storage_path, image_variants, sort_order, is_published, published_at, expires_at",
+        )
+        .order("published_at", { ascending: false }),
+      supabase.from("site_settings").select("*").eq("id", 1).maybeSingle(),
+    ]);
     const error =
       categoriesResult.error ??
       itemsResult.error ??
@@ -508,6 +527,18 @@ export default function Admin() {
       sortOrder: category.sort_order,
     }));
     setCategories(nextCategories);
+    setCategoryDraft((current) =>
+      current.id || current.nameSr || current.nameEn || current.nameRu
+        ? current
+        : {
+            ...current,
+            sortOrder:
+              Math.max(
+                -1,
+                ...nextCategories.map((category) => category.sortOrder),
+              ) + 1,
+          },
+    );
     setItems(
       (itemsResult.data ?? []).map((item) => ({
         id: item.id,
@@ -709,8 +740,12 @@ export default function Admin() {
     }
     notice(
       tr(
-        uploaded === 1 ? "Прича је објављена на 24 часа." : `Објављено је ${uploaded} прича на 24 часа.`,
-        uploaded === 1 ? "Story published for 24 hours." : `${uploaded} stories published for 24 hours.`,
+        uploaded === 1
+          ? "Прича је објављена на 24 часа."
+          : `Објављено је ${uploaded} прича на 24 часа.`,
+        uploaded === 1
+          ? "Story published for 24 hours."
+          : `${uploaded} stories published for 24 hours.`,
       ),
       "success",
     );
@@ -801,12 +836,39 @@ export default function Admin() {
           .from("menu_categories")
           .update(payload)
           .eq("id", categoryDraft.id)
-      : await supabase.from("menu_categories").insert(payload);
+          .select("id")
+          .single()
+      : await supabase
+          .from("menu_categories")
+          .insert(payload)
+          .select("id")
+          .single();
     if (result.error) notice(result.error.message, "error");
     else {
-      setCategoryDraft(emptyCategory);
-      setEditingCategory(false);
-      notice(tr("Категорија је сачувана.", "Category saved."), "success");
+      const saved = {
+        ...categoryDraft,
+        id: result.data.id,
+        nameEn: translations.name.en,
+        nameRu: translations.name.ru,
+      };
+      const incomplete = noticeSaved(
+        tr("Категорија је сачувана.", "Category saved."),
+        [nameEntry(saved)],
+      );
+      setCategoryDraft(
+        incomplete
+          ? saved
+          : {
+              ...emptyCategory,
+              sortOrder:
+                Math.max(
+                  -1,
+                  ...categories.map((category) => category.sortOrder),
+                  saved.sortOrder,
+                ) + 1,
+            },
+      );
+      setEditingCategory(incomplete);
       await load();
     }
   };
@@ -815,8 +877,8 @@ export default function Admin() {
     if (
       !window.confirm(
         tr(
-          "Избрисати категорију? Категорија са пићима не може бити избрисана.",
-          "Delete category? A category containing drinks cannot be deleted.",
+          "Избрисати категорију? Категорија са ставкама не може бити избрисана.",
+          "Delete category? A category containing menu items cannot be deleted.",
         ),
       )
     )
@@ -834,15 +896,11 @@ export default function Admin() {
 
   const saveItem = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (
-      !draft.categoryId ||
-      !draft.nameSr.trim() ||
-      !draft.price.trim()
-    ) {
+    if (!draft.categoryId || !draft.nameSr.trim() || !draft.price.trim()) {
       notice(
         tr(
-          "Одаберите категорију и унесите назив и цијену пића.",
-          "Choose a category and enter the drink name and price.",
+          "Одаберите категорију и унесите назив и цијену ставке.",
+          "Choose a category and enter the item name and price.",
         ),
         "error",
       );
@@ -895,8 +953,13 @@ export default function Admin() {
       ...(editingItem ? {} : { sort_order: items.length }),
     };
     const result = editingItem
-      ? await supabase.from("menu_items").update(payload).eq("id", draft.id)
-      : await supabase.from("menu_items").insert(payload);
+      ? await supabase
+          .from("menu_items")
+          .update(payload)
+          .eq("id", draft.id)
+          .select("id")
+          .single()
+      : await supabase.from("menu_items").insert(payload).select("id").single();
     if (result.error) {
       notice(result.error.message, "error");
       return;
@@ -911,15 +974,30 @@ export default function Admin() {
       ]).catch(() =>
         notice(
           tr(
-            "Пиће је сачувано, али стара слика није уклоњена.",
-            "Drink saved, but the old image could not be removed.",
+            "Ставка је сачувана, али стара слика није уклоњена.",
+            "Menu item saved, but the old image could not be removed.",
           ),
           "error",
         ),
       );
-    setDraft({ ...emptyItem, categoryId: categories[0]?.id ?? "" });
-    setEditingItem(false);
-    notice(tr("Пиће је сачувано.", "Drink saved."), "success");
+    const saved = {
+      ...draft,
+      id: result.data.id,
+      nameEn: translations.name.en,
+      nameRu: translations.name.ru,
+      descriptionEn: translations.description.en,
+      descriptionRu: translations.description.ru,
+      factEn: translations.fact.en,
+      factRu: translations.fact.ru,
+    };
+    const incomplete = noticeSaved(
+      tr("Ставка менија је сачувана.", "Menu item saved."),
+      itemEntries(saved),
+    );
+    setDraft(
+      incomplete ? saved : { ...emptyItem, categoryId: draft.categoryId },
+    );
+    setEditingItem(incomplete);
     await load();
   };
 
@@ -929,7 +1007,11 @@ export default function Admin() {
     setEditingItem(false);
   };
   const removeItem = async (item: AdminMenuItem) => {
-    if (!window.confirm(tr("Избрисати ово пиће?", "Delete this drink?")))
+    if (
+      !window.confirm(
+        tr("Избрисати ову ставку менија?", "Delete this menu item?"),
+      )
+    )
       return;
     const { error } = await supabase
       .from("menu_items")
@@ -945,22 +1027,19 @@ export default function Admin() {
     ]).catch(() =>
       notice(
         tr(
-          "Пиће је избрисано, али слика није уклоњена.",
-          "Drink deleted, but its image could not be removed.",
+          "Ставка менија је избрисана, али слика није уклоњена.",
+          "Menu item deleted, but its image could not be removed.",
         ),
         "error",
       ),
     );
-    notice(tr("Пиће је избрисано.", "Drink deleted."), "success");
+    notice(tr("Ставка менија је избрисана.", "Menu item deleted."), "success");
     await load();
   };
 
   const saveGallery = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (
-      !galleryDraft.image ||
-      !galleryDraft.altSr.trim()
-    ) {
+    if (!galleryDraft.image || !galleryDraft.altSr.trim()) {
       notice(
         tr(
           "Пренесите слику и унесите опис на српском.",
@@ -1004,7 +1083,13 @@ export default function Admin() {
           .from("gallery_items")
           .update(payload)
           .eq("id", galleryDraft.id)
-      : await supabase.from("gallery_items").insert(payload);
+          .select("id")
+          .single()
+      : await supabase
+          .from("gallery_items")
+          .insert(payload)
+          .select("id")
+          .single();
     if (result.error) {
       notice(result.error.message, "error");
       return;
@@ -1025,12 +1110,18 @@ export default function Admin() {
           "error",
         ),
       );
-    setGalleryDraft(emptyGallery);
-    setEditingGallery(false);
-    notice(
+    const saved = {
+      ...galleryDraft,
+      id: result.data.id,
+      altEn: translations.alt.en,
+      altRu: translations.alt.ru,
+    };
+    const incomplete = noticeSaved(
       tr("Галеријска слика је сачувана.", "Gallery image saved."),
-      "success",
+      galleryEntries(saved),
     );
+    setGalleryDraft(incomplete ? saved : emptyGallery);
+    setEditingGallery(incomplete);
     await load();
   };
 
@@ -1078,6 +1169,24 @@ export default function Admin() {
     successMessage: string,
   ) => {
     event.preventDefault();
+    if (tab === "contact") {
+      const { error } = await supabase.from("site_settings").upsert({
+        id: 1,
+        instagram: settings.instagram.trim() || null,
+        facebook: settings.facebook.trim() || null,
+        tiktok: settings.tiktok.trim() || null,
+        phone: settings.phone.trim() || null,
+        email: settings.email.trim() || null,
+        social_handle: settings.socialHandle.trim() || null,
+      });
+      if (error) {
+        notice(error.message, "error");
+        return;
+      }
+      notice(successMessage, "success");
+      await load();
+      return;
+    }
     if (
       !validateCyrillic([
         settings.heroTitleSr,
@@ -1135,51 +1244,144 @@ export default function Admin() {
         ),
       );
     setSettings(translatedSettings);
-    notice(successMessage, "success");
+    noticeSaved(successMessage, settingsEntries(translatedSettings));
     await load();
   };
 
-  type LocalizedSetting =
-    | "heroTitle"
-    | "heroDescription"
-    | "heroCta"
-    | "footerAddressHeading"
-    | "footerAddressLine1"
-    | "footerAddressLine2"
-    | "footerAddressLine3"
-    | "footerHoursHeading"
-    | "footerHoursLine1"
-    | "footerHoursLine2"
-    | "footerHoursLine3"
-    | "footerContactHeading"
-    | "footerCopyright";
-  const updateLocalizedSetting = (field: LocalizedSetting, value: string) => {
-    const key = `${field}${CONTENT_SUFFIX[contentLanguage]}` as keyof SiteSettings;
-    setSettings((current) => ({ ...current, [key]: value }));
-  };
   const logout = async () => {
     await supabase.auth.signOut();
     navigate("/");
   };
-  const suffix = CONTENT_SUFFIX[contentLanguage];
-  const localizedSetting = (field: string) =>
-    settings[`${field}${suffix}` as keyof SiteSettings] as string;
-  const localizedItemKey = (field: "name" | "description" | "fact") =>
-    `${field}${suffix}` as
-      | "nameSr"
-      | "nameEn"
-      | "nameRu"
-      | "descriptionSr"
-      | "descriptionEn"
-      | "descriptionRu"
-      | "factSr"
-      | "factEn"
-      | "factRu";
-  const localizedCategoryKey = `name${suffix}` as
-    | "nameSr"
-    | "nameEn"
-    | "nameRu";
-  const localizedGalleryKey = `alt${suffix}` as "altSr" | "altEn" | "altRu";
+  const localizedCategoryKey = uiLanguage === "en" ? "nameEn" : "nameSr";
+  const localizedGalleryKey = uiLanguage === "en" ? "altEn" : "altSr";
+  const localizedItemKey = (_field: "name") =>
+    uiLanguage === "en" ? "nameEn" : "nameSr";
+
+  const nameEntry = (
+    value: MenuCategory | AdminMenuItem,
+  ): TranslationEntry => ({
+    key: tr("Назив", "Name"),
+    sr: value.nameSr,
+    en: value.nameEn,
+    ru: value.nameRu,
+    required: true,
+  });
+  const itemEntries = (item: AdminMenuItem): TranslationEntry[] => [
+    nameEntry(item),
+    ...categories
+      .filter((category) => category.id === item.categoryId)
+      .map((category) => ({
+        ...nameEntry(category),
+        key: tr("Назив категорије", "Category name"),
+      })),
+    {
+      key: tr("Опис", "Description"),
+      sr: item.descriptionSr,
+      en: item.descriptionEn,
+      ru: item.descriptionRu,
+    },
+    {
+      key: tr("Занимљивост", "Fun fact"),
+      sr: item.factSr,
+      en: item.factEn,
+      ru: item.factRu,
+    },
+  ];
+  const galleryEntries = (item: AdminGalleryItem): TranslationEntry[] => [
+    {
+      key: tr("Опис слике", "Image description"),
+      sr: item.altSr,
+      en: item.altEn,
+      ru: item.altRu,
+      required: true,
+    },
+  ];
+  const settingsEntries = (value: SiteSettings): TranslationEntry[] =>
+    localizedSettingNames.map((field) => ({
+      key: settingLabels[field][uiLanguage],
+      sr: value[`${field}Sr`],
+      en: value[`${field}En`],
+      ru: value[`${field}Ru`],
+    }));
+  const noticeSaved = (text: string, entries: TranslationEntry[]) => {
+    const issues = translationIssues(entries);
+    if (!issues.length) {
+      notice(text, "success");
+      return false;
+    }
+    const details = issues
+      .map((issue) => `${issue.language.toUpperCase()}: ${issue.key}`)
+      .join(" · ");
+    notice(
+      `${text} ${tr("Преводи нису потпуни", "Translations are incomplete")}: ${details}. ${tr("Допуните означена поља. Ставка без назива се не приказује на том језику.", "Complete the marked fields. An item without a name is hidden in that language.")}`,
+      "warning",
+    );
+    return true;
+  };
+  const runSave = async (
+    event: React.FormEvent,
+    action: (event: React.FormEvent) => Promise<void>,
+  ) => {
+    event.preventDefault();
+    if (saving) return;
+    const entries =
+      tab === "categories"
+        ? [nameEntry(categoryDraft)]
+        : tab === "menu"
+          ? itemEntries(draft)
+          : tab === "gallery"
+            ? galleryEntries(galleryDraft)
+            : tab === "content"
+              ? settingsEntries(settings)
+              : [];
+    const invalid = translationIssues(entries).filter(
+      (issue) => issue.reason === "invalid",
+    );
+    if (invalid.length) {
+      notice(
+        tr(
+          "Унесите српски и руски текст ћирилицом",
+          "Enter Serbian and Russian text in Cyrillic",
+        ) +
+          ": " +
+          invalid
+            .map((issue) => `${issue.language.toUpperCase()} · ${issue.key}`)
+            .join(", "),
+        "error",
+      );
+      (event.currentTarget as HTMLFormElement)
+        .querySelector<HTMLElement>('[aria-invalid="true"]')
+        ?.focus();
+      return;
+    }
+    setSaving(true);
+    setFeedback(null);
+    try {
+      await action(event);
+    } catch (error) {
+      notice(error instanceof Error ? error.message : String(error), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const scrollToEditor = () =>
+    requestAnimationFrame(() => {
+      document.querySelector("form.admin-panel")?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+        block: "start",
+      });
+    });
+  const filteredItems = items.filter(
+    (item) =>
+      (!menuCategoryFilter || item.categoryId === menuCategoryFilter) &&
+      [item.nameSr, item.nameEn, item.nameRu].some((name) =>
+        name
+          .toLocaleLowerCase()
+          .includes(menuSearch.trim().toLocaleLowerCase()),
+      ),
+  );
 
   if (sessionState === "loading")
     return (
@@ -1297,7 +1499,18 @@ export default function Admin() {
           </div>
         </div>
       </header>
-      <section className="admin-content">
+      <section
+        className="admin-content"
+        onInvalidCapture={() =>
+          notice(
+            tr(
+              "Попуните означена обавезна поља прије чувања.",
+              "Complete the marked required fields before saving.",
+            ),
+            "error",
+          )
+        }
+      >
         <div className="admin-page-heading">
           <h1>{tabCopy[1]}</h1>
           <p>{tabCopy[2]}</p>
@@ -1321,8 +1534,36 @@ export default function Admin() {
           ))}
         </nav>
         {feedback && (
-          <div className="admin-status" data-tone={feedback.tone} role="status">
-            {feedback.text}
+          <div
+            className="admin-status admin-status--floating"
+            data-tone={feedback.tone}
+            role={feedback.tone === "success" ? "status" : "alert"}
+            aria-atomic="true"
+          >
+            <span className="admin-status__icon" aria-hidden="true">
+              {feedback.tone === "success" ? "✓" : "!"}
+            </span>
+            <div>
+              <strong>
+                {feedback.tone === "error"
+                  ? tr("Грешка", "Error")
+                  : feedback.tone === "warning"
+                    ? tr(
+                        "Сачувано · провјерите преводе",
+                        "Saved · check translations",
+                      )
+                    : tr("Успјешно", "Success")}
+              </strong>
+              <p>{feedback.text}</p>
+            </div>
+            <button
+              type="button"
+              className="admin-status__close"
+              aria-label={tr("Затвори обавјештење", "Dismiss notification")}
+              onClick={() => setFeedback(null)}
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -1345,7 +1586,10 @@ export default function Admin() {
                   <span>
                     {uploading === "stories"
                       ? tr("Слике се преносе…", "Uploading images…")
-                      : tr("Одаберите слике са уређаја", "Choose photos from device")}
+                      : tr(
+                          "Одаберите слике са уређаја",
+                          "Choose photos from device",
+                        )}
                   </span>
                   <input
                     type="file"
@@ -1370,23 +1614,37 @@ export default function Admin() {
               </div>
             </section>
             <RecordSection
-              title={tr("Објављене и истекле приче", "Published and expired stories")}
-              empty={tr("Још нема објављених прича.", "No stories have been published yet.")}
+              title={tr(
+                "Објављене и истекле приче",
+                "Published and expired stories",
+              )}
+              empty={tr(
+                "Још нема објављених прича.",
+                "No stories have been published yet.",
+              )}
             >
               {stories.map((story) => {
                 const isActive =
                   story.isPublished && Date.parse(story.expiresAt) > Date.now();
                 return (
                   <div className="admin-record" key={story.id}>
-                    <img className="admin-record__image" src={story.image} alt="" />
+                    <img
+                      className="admin-record__image"
+                      src={story.image}
+                      alt=""
+                    />
                     <div className="admin-record__content">
                       <strong className="admin-record__title">
                         {isActive
-                          ? tr("Видљиво на почетној страници", "Visible on the homepage")
+                          ? tr(
+                              "Видљиво на почетној страници",
+                              "Visible on the homepage",
+                            )
                           : tr("Истекло или скривено", "Expired or hidden")}
                       </strong>
                       <div className="admin-record__meta">
-                        {tr("Истиче", "Expires")}: {new Intl.DateTimeFormat(
+                        {tr("Истиче", "Expires")}:{" "}
+                        {new Intl.DateTimeFormat(
                           uiLanguage === "sr" ? "sr-Cyrl-BA" : "en-GB",
                           { dateStyle: "medium", timeStyle: "short" },
                         ).format(new Date(story.expiresAt))}
@@ -1417,9 +1675,11 @@ export default function Admin() {
           <form
             className="admin-panel"
             onSubmit={(event) =>
-              void saveSettings(
-                event,
-                tr("Текст странице је сачуван.", "Page content saved."),
+              void runSave(event, (e) =>
+                saveSettings(
+                  e,
+                  tr("Текст странице је сачуван.", "Page content saved."),
+                ),
               )
             }
           >
@@ -1428,215 +1688,69 @@ export default function Admin() {
                 <h2>{tr("Почетни екран и подножје", "Homepage and footer")}</h2>
                 <p>
                   {tr(
-                    "Изаберите језик, па уредите текст који се приказује на почетној и у подножју сајта.",
-                    "Choose a language, then edit the text shown on the homepage and in the footer.",
+                    "За свако поље унесите преводе један испод другог.",
+                    "Enter the translations below each field.",
                   )}
                 </p>
               </div>
-              <LanguageSwitch
-                value={contentLanguage}
-                onChange={setContentLanguage}
+            </div>
+            <TranslationSummary
+              entries={settingsEntries(settings)}
+              language={uiLanguage}
+            />
+            <div className="admin-content-section">
+              <MediaUpload
+                label={tr("Слика почетног екрана", "Homepage image")}
+                value={settings.heroImage}
+                busy={uploading === "hero"}
                 language={uiLanguage}
+                onUpload={(file) => uploadFor(file, "hero")}
               />
             </div>
-            <div className="admin-content-section">
-              <div className="admin-content-section__heading">
-                <h3>{tr("Почетна слика и увод", "Homepage image and introduction")}</h3>
-                <p>{tr("Ови елементи се приказују на врху почетне странице.", "These elements appear at the top of the homepage.")}</p>
+            {(["hero", "footer"] as const).map((section) => (
+              <div className="admin-content-section" key={section}>
+                <div className="admin-content-section__heading">
+                  <h3>
+                    {section === "hero"
+                      ? tr("Увод на почетној", "Homepage introduction")
+                      : tr("Подножје сајта", "Website footer")}
+                  </h3>
+                </div>
+                <div className="admin-translation-fields">
+                  {localizedSettingNames
+                    .filter((field) => field.startsWith(section))
+                    .map((field) => (
+                      <TranslatedField
+                        key={field}
+                        label={settingLabels[field][uiLanguage]}
+                        language={uiLanguage}
+                        multiline={
+                          field === "heroTitle" || field === "heroDescription"
+                        }
+                        value={{
+                          sr: settings[`${field}Sr`],
+                          en: settings[`${field}En`],
+                          ru: settings[`${field}Ru`],
+                        }}
+                        onChange={(lang, value) =>
+                          setSettings((current) => ({
+                            ...current,
+                            [`${field}${CONTENT_SUFFIX[lang]}`]: value,
+                          }))
+                        }
+                      />
+                    ))}
+                </div>
               </div>
-              <div className="admin-form-grid">
-              <Field
-                label={tr("Почетна слика", "Hero image")}
-                hint={tr("Позадинска слика преко цијелог почетног екрана.", "Background image across the full homepage hero.")}
-                full
+            ))}
+            <div className="admin-actions admin-actions--save">
+              <button
+                className="admin-button"
+                disabled={saving || uploading === "hero"}
               >
-                <MediaUpload
-                  label={tr("Слика почетног екрана", "Homepage image")}
-                  value={settings.heroImage}
-                  busy={uploading === "hero"}
-                  language={uiLanguage}
-                  onUpload={(file) => uploadFor(file, "hero")}
-                />
-              </Field>
-              <Field
-                label={tr("Наслов на почетној", "Homepage title")}
-                hint={tr("Велики наслов у средини почетне слике.", "Large heading centred on the homepage image.")}
-                full
-              >
-                <textarea
-                  className="admin-input admin-textarea"
-                  value={localizedSetting("heroTitle")}
-                  placeholder={tr("Кафе Бабушка у Бањој Луци", "Caffe Babuska in Banja Luka")}
-                  onChange={(event) =>
-                    updateLocalizedSetting("heroTitle", event.target.value)
-                  }
-                />
-              </Field>
-              <Field
-                label={tr("Опис на почетној", "Homepage description")}
-                hint={tr("Кратак текст испод великог наслова.", "Short copy directly below the main heading.")}
-                full
-              >
-                <textarea
-                  className="admin-input admin-textarea"
-                  value={localizedSetting("heroDescription")}
-                  placeholder={tr("Кафа, пића и пријатна атмосфера у срцу Бање Луке.", "Coffee, drinks and a welcoming atmosphere in the heart of Banja Luka.")}
-                  onChange={(event) =>
-                    updateLocalizedSetting(
-                      "heroDescription",
-                      event.target.value,
-                    )
-                  }
-                />
-              </Field>
-              <Field
-                label={tr("Текст дугмета", "Button text")}
-                hint={tr("Црвено дугме које води до менија.", "Red button that takes visitors to the menu.")}
-                full
-              >
-                <input
-                  className="admin-input"
-                  value={localizedSetting("heroCta")}
-                  placeholder={tr("Истражи мени", "Explore menu")}
-                  onChange={(event) =>
-                    updateLocalizedSetting("heroCta", event.target.value)
-                  }
-                />
-              </Field>
-              </div>
-            </div>
-            <div className="admin-content-section">
-              <div className="admin-content-section__heading">
-                <h3>{tr("Подножје сајта", "Website footer")}</h3>
-                <p>{tr("Ови текстови се приказују у доњем дијелу сваке странице.", "These texts appear at the bottom of every page.")}</p>
-              </div>
-              <div className="admin-form-grid">
-              <Field
-                label={tr("Наслов адресе", "Address heading")}
-                hint={tr("Подножје → прва колона.", "Footer → first column.")}
-              >
-                <input
-                  className="admin-input"
-                  value={localizedSetting("footerAddressHeading")}
-                  placeholder={tr("Адреса", "Address")}
-                  onChange={(event) =>
-                    updateLocalizedSetting(
-                      "footerAddressHeading",
-                      event.target.value,
-                    )
-                  }
-                />
-              </Field>
-              <Field
-                label={tr("Наслов контакта", "Contact heading")}
-                hint={tr("Подножје → колона са телефоном и е-поштом.", "Footer → column with phone and email.")}
-              >
-                <input
-                  className="admin-input"
-                  value={localizedSetting("footerContactHeading")}
-                  placeholder={tr("Контакт", "Contact")}
-                  onChange={(event) =>
-                    updateLocalizedSetting(
-                      "footerContactHeading",
-                      event.target.value,
-                    )
-                  }
-                />
-              </Field>
-              {([1, 2, 3] as const).map((line) => (
-                <Field
-                  key={`address-${line}`}
-                  label={tr(`Адреса — ${line}. ред`, `Address — line ${line}`)}
-                  hint={tr(`Подножје → Адреса → ${line}. ред.`, `Footer → Address → line ${line}.`)}
-                  full
-                >
-                  <input
-                    className="admin-input"
-                    value={localizedSetting(`footerAddressLine${line}`)}
-                    placeholder={
-                      line === 1
-                        ? tr("Господска улица 14", "Gospodska Street 14")
-                        : line === 2
-                          ? tr("78000 Бања Лука", "78000 Banja Luka")
-                          : tr("Босна и Херцеговина", "Bosnia and Herzegovina")
-                    }
-                    onChange={(event) =>
-                      updateLocalizedSetting(
-                        `footerAddressLine${line}` as LocalizedSetting,
-                        event.target.value,
-                      )
-                    }
-                  />
-                </Field>
-              ))}
-              <Field
-                label={tr("Наслов радног времена", "Opening-hours heading")}
-                hint={tr("Подножје → средња колона.", "Footer → middle column.")}
-                full
-              >
-                <input
-                  className="admin-input"
-                  value={localizedSetting("footerHoursHeading")}
-                  placeholder={tr("Радно вријеме", "Opening hours")}
-                  onChange={(event) =>
-                    updateLocalizedSetting(
-                      "footerHoursHeading",
-                      event.target.value,
-                    )
-                  }
-                />
-              </Field>
-              {([1, 2, 3] as const).map((line) => (
-                <Field
-                  key={`hours-${line}`}
-                  label={tr(
-                    `Радно вријеме — ${line}. ред`,
-                    `Opening hours — line ${line}`,
-                  )}
-                  hint={tr(`Подножје → Радно вријеме → ${line}. ред.`, `Footer → Opening hours → line ${line}.`)}
-                  full
-                >
-                  <input
-                    className="admin-input"
-                    value={localizedSetting(`footerHoursLine${line}`)}
-                    placeholder={
-                      line === 1
-                        ? tr("Понедјељак – петак: 08:00 – 23:00", "Monday – Friday: 08:00 – 23:00")
-                        : line === 2
-                          ? tr("Субота: 09:00 – 00:00", "Saturday: 09:00 – 00:00")
-                          : tr("Недјеља: 09:00 – 22:00", "Sunday: 09:00 – 22:00")
-                    }
-                    onChange={(event) =>
-                      updateLocalizedSetting(
-                        `footerHoursLine${line}` as LocalizedSetting,
-                        event.target.value,
-                      )
-                    }
-                  />
-                </Field>
-              ))}
-              <Field
-                label={tr("Ауторска права", "Copyright")}
-                hint={tr("Најдоњи ред подножја, испод свих колона.", "Bottom-most footer line, below all columns.")}
-                full
-              >
-                <input
-                  className="admin-input"
-                  value={localizedSetting("footerCopyright")}
-                  placeholder={tr("© 2026 Кафе Бабушка · Бања Лука", "© 2026 Café Babuska · Banja Luka")}
-                  onChange={(event) =>
-                    updateLocalizedSetting(
-                      "footerCopyright",
-                      event.target.value,
-                    )
-                  }
-                />
-              </Field>
-              </div>
-            </div>
-            <div className="admin-actions">
-              <button className="admin-button" disabled={uploading === "hero"}>
-                {tr("Сачувај садржај", "Save content")}
+                {saving
+                  ? tr("Чување…", "Saving…")
+                  : tr("Сачувај садржај", "Save content")}
               </button>
             </div>
           </form>
@@ -1644,7 +1758,10 @@ export default function Admin() {
 
         {tab === "categories" && (
           <>
-            <form className="admin-panel" onSubmit={saveCategory}>
+            <form
+              className="admin-panel"
+              onSubmit={(event) => void runSave(event, saveCategory)}
+            >
               <div className="admin-panel__heading">
                 <div>
                   <h2>
@@ -1659,31 +1776,30 @@ export default function Admin() {
                     )}
                   </p>
                 </div>
-                <LanguageSwitch
-                  value={contentLanguage}
-                  onChange={setContentLanguage}
-                  language={uiLanguage}
-                  completed={{
-                    sr: Boolean(categoryDraft.nameSr.trim()),
-                    en: Boolean(categoryDraft.nameEn.trim()),
-                    ru: Boolean(categoryDraft.nameRu.trim()),
-                  }}
-                />
               </div>
+              <TranslationSummary
+                entries={[nameEntry(categoryDraft)]}
+                language={uiLanguage}
+              />
               <div className="admin-form-grid">
-                <Field label={tr("Назив категорије", "Category name")}>
-                  <input
-                    className="admin-input"
-                    required={contentLanguage === "sr"}
-                    value={categoryDraft[localizedCategoryKey]}
-                    onChange={(event) =>
-                      setCategoryDraft({
-                        ...categoryDraft,
-                        [localizedCategoryKey]: event.target.value,
-                      })
+                <div className="admin-field--full">
+                  <TranslatedField
+                    label={tr("Назив категорије", "Category name")}
+                    language={uiLanguage}
+                    required
+                    value={{
+                      sr: categoryDraft.nameSr,
+                      en: categoryDraft.nameEn,
+                      ru: categoryDraft.nameRu,
+                    }}
+                    onChange={(lang, value) =>
+                      setCategoryDraft((current) => ({
+                        ...current,
+                        [`name${CONTENT_SUFFIX[lang]}`]: value,
+                      }))
                     }
                   />
-                </Field>
+                </div>
                 <Field label={tr("Редослијед", "Order")}>
                   <input
                     className="admin-input"
@@ -1701,10 +1817,12 @@ export default function Admin() {
                 </Field>
               </div>
               <div className="admin-actions">
-                <button className="admin-button">
-                  {editingCategory
-                    ? tr("Сачувај измјене", "Save changes")
-                    : tr("Додај категорију", "Add category")}
+                <button className="admin-button" disabled={saving}>
+                  {saving
+                    ? tr("Чување…", "Saving…")
+                    : editingCategory
+                      ? tr("Сачувај измјене", "Save changes")
+                      : tr("Додај категорију", "Add category")}
                 </button>
                 {editingCategory && (
                   <button
@@ -1731,8 +1849,18 @@ export default function Admin() {
                       {category[localizedCategoryKey] || category.nameSr}
                     </strong>
                     <div className="admin-record__meta">
-                      {tr("Редослијед", "Order")}: {category.sortOrder}
+                      {tr("Редослијед", "Order")}: {category.sortOrder} ·{" "}
+                      {
+                        items.filter((item) => item.categoryId === category.id)
+                          .length
+                      }{" "}
+                      {tr("ставки", "items")}
                     </div>
+                    <TranslationSummary
+                      entries={[nameEntry(category)]}
+                      language={uiLanguage}
+                      compact
+                    />
                   </div>
                   <div className="admin-record__actions">
                     <button
@@ -1740,12 +1868,25 @@ export default function Admin() {
                       onClick={() => {
                         setCategoryDraft(category);
                         setEditingCategory(true);
+                        scrollToEditor();
                       }}
                     >
                       {tr("Уреди", "Edit")}
                     </button>
                     <button
                       className="admin-button admin-button--danger"
+                      disabled={
+                        saving ||
+                        items.some((item) => item.categoryId === category.id)
+                      }
+                      title={
+                        items.some((item) => item.categoryId === category.id)
+                          ? tr(
+                              "Прво премјестите или избришите ставке ове категорије.",
+                              "Move or delete this category’s items first.",
+                            )
+                          : undefined
+                      }
                       onClick={() => void removeCategory(category.id)}
                     >
                       {tr("Избриши", "Delete")}
@@ -1759,19 +1900,22 @@ export default function Admin() {
 
         {tab === "menu" && (
           <>
-            <form className="admin-panel" onSubmit={saveItem}>
+            <form
+              className="admin-panel"
+              onSubmit={(event) => void runSave(event, saveItem)}
+            >
               <div className="admin-panel__heading">
                 <div>
                   <h2>
                     {editingItem
-                      ? tr("Уреди пиће", "Edit drink")
-                      : tr("Ново пиће", "New drink")}
+                      ? tr("Уреди ставку менија", "Edit menu item")
+                      : tr("Нова ставка менија", "New menu item")}
                   </h2>
                   <p>
                     {categories.length
                       ? tr(
-                          "Назив пића на српском и енглеском и цијена су обавезни. Руски превод и слика нису обавезни.",
-                          "The Serbian and English drink names and price are required. Russian and the image are optional.",
+                          "Одаберите категорију и унесите цијену и називе на сва три језика. Слика, опис и занимљивост су необавезни.",
+                          "Choose a category and enter the price and names in all three languages. Image, description and fun fact are optional.",
                         )
                       : tr(
                           "Прво креирајте категорију.",
@@ -1779,21 +1923,11 @@ export default function Admin() {
                         )}
                   </p>
                 </div>
-                <LanguageSwitch
-                  value={contentLanguage}
-                  onChange={setContentLanguage}
-                  language={uiLanguage}
-                  completed={{
-                    sr: Boolean(
-                      draft.nameSr.trim(),
-                    ),
-                    en: Boolean(
-                      draft.nameEn.trim(),
-                    ),
-                    ru: Boolean(draft.nameRu.trim()),
-                  }}
-                />
               </div>
+              <TranslationSummary
+                entries={itemEntries(draft)}
+                language={uiLanguage}
+              />
               <div className="admin-form-grid">
                 <Field label={tr("Категорија", "Category")}>
                   <select
@@ -1815,19 +1949,6 @@ export default function Admin() {
                     ))}
                   </select>
                 </Field>
-                <Field label={tr("Назив пића", "Drink name")}>
-                  <input
-                    className="admin-input"
-                    required={contentLanguage === "sr"}
-                    value={draft[localizedItemKey("name")]}
-                    onChange={(event) =>
-                      setDraft({
-                        ...draft,
-                        [localizedItemKey("name")]: event.target.value,
-                      })
-                    }
-                  />
-                </Field>
                 <Field label={tr("Цијена", "Price")}>
                   <input
                     className="admin-input"
@@ -1839,13 +1960,41 @@ export default function Admin() {
                     }
                   />
                 </Field>
+                <div className="admin-field--full admin-translation-fields">
+                  {(["name", "description", "fact"] as const).map((field) => (
+                    <TranslatedField
+                      key={field}
+                      label={
+                        field === "name"
+                          ? tr("Назив ставке", "Item name")
+                          : field === "description"
+                            ? tr("Опис", "Description")
+                            : tr("Занимљивост", "Fun fact")
+                      }
+                      language={uiLanguage}
+                      required={field === "name"}
+                      multiline={field !== "name"}
+                      value={{
+                        sr: draft[`${field}Sr`],
+                        en: draft[`${field}En`],
+                        ru: draft[`${field}Ru`],
+                      }}
+                      onChange={(lang, value) =>
+                        setDraft((current) => ({
+                          ...current,
+                          [`${field}${CONTENT_SUFFIX[lang]}`]: value,
+                        }))
+                      }
+                    />
+                  ))}
+                </div>
                 <Field
                   label={tr("Слика", "Image")}
                   hint={tr("Необавезно", "Optional")}
                   full
                 >
                   <MediaUpload
-                    label={tr("Слика пића", "Drink image")}
+                    label={tr("Слика ставке", "Item image")}
                     value={draft.image}
                     busy={uploading === "menu"}
                     language={uiLanguage}
@@ -1856,11 +2005,15 @@ export default function Admin() {
               <div className="admin-actions">
                 <button
                   className="admin-button"
-                  disabled={!categories.length || uploading === "menu"}
+                  disabled={
+                    saving || !categories.length || uploading === "menu"
+                  }
                 >
-                  {editingItem
-                    ? tr("Сачувај измјене", "Save changes")
-                    : tr("Додај пиће", "Add drink")}
+                  {saving
+                    ? tr("Чување…", "Saving…")
+                    : editingItem
+                      ? tr("Сачувај измјене", "Save changes")
+                      : tr("Додај у мени", "Add menu item")}
                 </button>
                 {editingItem && (
                   <button
@@ -1873,11 +2026,51 @@ export default function Admin() {
                 )}
               </div>
             </form>
+            <div className="admin-list-tools">
+              <Field label={tr("Претражи мени", "Search menu")}>
+                <input
+                  type="search"
+                  className="admin-input"
+                  value={menuSearch}
+                  placeholder={tr(
+                    "Назив на било ком језику…",
+                    "Name in any language…",
+                  )}
+                  onChange={(event) => setMenuSearch(event.target.value)}
+                />
+              </Field>
+              <Field
+                label={tr("Филтрирај по категорији", "Filter by category")}
+              >
+                <select
+                  className="admin-input"
+                  value={menuCategoryFilter}
+                  onChange={(event) =>
+                    setMenuCategoryFilter(event.target.value)
+                  }
+                >
+                  <option value="">
+                    {tr("Све категорије", "All categories")}
+                  </option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category[localizedCategoryKey] || category.nameSr}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <small>
+                {filteredItems.length} / {items.length} {tr("ставки", "items")}
+              </small>
+            </div>
             <RecordSection
               title={tr("Ставке менија", "Menu items")}
-              empty={tr("Нема унесених пића.", "No drinks yet.")}
+              empty={tr(
+                "Нема ставки за изабрану претрагу.",
+                "No menu items match your search.",
+              )}
             >
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <div className="admin-record" key={item.id}>
                   {item.image && (
                     <img
@@ -1900,6 +2093,11 @@ export default function Admin() {
                         tr("Без категорије", "No category")}{" "}
                       · {item.price}
                     </div>
+                    <TranslationSummary
+                      entries={itemEntries(item)}
+                      language={uiLanguage}
+                      compact
+                    />
                   </div>
                   <div className="admin-record__actions">
                     <button
@@ -1907,6 +2105,7 @@ export default function Admin() {
                       onClick={() => {
                         setDraft(item);
                         setEditingItem(true);
+                        scrollToEditor();
                       }}
                     >
                       {tr("Уреди", "Edit")}
@@ -1926,7 +2125,10 @@ export default function Admin() {
 
         {tab === "gallery" && (
           <>
-            <form className="admin-panel" onSubmit={saveGallery}>
+            <form
+              className="admin-panel"
+              onSubmit={(event) => void runSave(event, saveGallery)}
+            >
               <div className="admin-panel__heading">
                 <div>
                   <h2>
@@ -1936,22 +2138,16 @@ export default function Admin() {
                   </h2>
                   <p>
                     {tr(
-                      "Слика се преноси директно у сигурно складиште.",
-                      "The image uploads directly to Supabase Storage.",
+                      "Додајте слику и опис на сва три језика.",
+                      "Add a photo and a description in all three languages.",
                     )}
                   </p>
                 </div>
-                <LanguageSwitch
-                  value={contentLanguage}
-                  onChange={setContentLanguage}
-                  language={uiLanguage}
-                  completed={{
-                    sr: Boolean(galleryDraft.altSr.trim()),
-                    en: Boolean(galleryDraft.altEn.trim()),
-                    ru: Boolean(galleryDraft.altRu.trim()),
-                  }}
-                />
               </div>
+              <TranslationSummary
+                entries={galleryEntries(galleryDraft)}
+                language={uiLanguage}
+              />
               <div className="admin-form-grid">
                 <Field label={tr("Слика", "Image")} full>
                   <MediaUpload
@@ -1962,19 +2158,24 @@ export default function Admin() {
                     onUpload={(file) => uploadFor(file, "gallery")}
                   />
                 </Field>
-                <Field label={tr("Опис слике", "Image description")} full>
-                  <input
-                    className="admin-input"
-                    required={contentLanguage === "sr"}
-                    value={galleryDraft[localizedGalleryKey]}
-                    onChange={(event) =>
-                      setGalleryDraft({
-                        ...galleryDraft,
-                        [localizedGalleryKey]: event.target.value,
-                      })
+                <div className="admin-field--full">
+                  <TranslatedField
+                    label={tr("Опис слике", "Image description")}
+                    language={uiLanguage}
+                    required
+                    value={{
+                      sr: galleryDraft.altSr,
+                      en: galleryDraft.altEn,
+                      ru: galleryDraft.altRu,
+                    }}
+                    onChange={(lang, value) =>
+                      setGalleryDraft((current) => ({
+                        ...current,
+                        [`alt${CONTENT_SUFFIX[lang]}`]: value,
+                      }))
                     }
                   />
-                </Field>
+                </div>
                 <Field label={tr("Редослијед", "Order")}>
                   <input
                     className="admin-input"
@@ -2009,11 +2210,13 @@ export default function Admin() {
               <div className="admin-actions">
                 <button
                   className="admin-button"
-                  disabled={uploading === "gallery"}
+                  disabled={saving || uploading === "gallery"}
                 >
-                  {editingGallery
-                    ? tr("Сачувај измјене", "Save changes")
-                    : tr("Додај слику", "Add image")}
+                  {saving
+                    ? tr("Чување…", "Saving…")
+                    : editingGallery
+                      ? tr("Сачувај измјене", "Save changes")
+                      : tr("Додај слику", "Add image")}
                 </button>
                 {editingGallery && (
                   <button
@@ -2047,6 +2250,11 @@ export default function Admin() {
                         : tr("Скривено", "Hidden")}{" "}
                       · {tr("редослијед", "order")} {item.sortOrder}
                     </div>
+                    <TranslationSummary
+                      entries={galleryEntries(item)}
+                      language={uiLanguage}
+                      compact
+                    />
                   </div>
                   <div className="admin-record__actions">
                     <button
@@ -2054,6 +2262,7 @@ export default function Admin() {
                       onClick={() => {
                         setGalleryDraft(item);
                         setEditingGallery(true);
+                        scrollToEditor();
                       }}
                     >
                       {tr("Уреди", "Edit")}
@@ -2075,11 +2284,13 @@ export default function Admin() {
           <form
             className="admin-panel admin-panel--narrow"
             onSubmit={(event) =>
-              void saveSettings(
-                event,
-                tr(
-                  "Контакт и мреже су сачувани.",
-                  "Contact and social links saved.",
+              void runSave(event, (e) =>
+                saveSettings(
+                  e,
+                  tr(
+                    "Контакт и мреже су сачувани.",
+                    "Contact and social links saved.",
+                  ),
                 ),
               )
             }
@@ -2100,7 +2311,10 @@ export default function Admin() {
             <div className="admin-form-grid">
               <Field
                 label={tr("Телефон", "Phone")}
-                hint={tr("Подножје → Контакт. Клик на број позива телефон.", "Footer → Contact. Visitors can tap the number to call.")}
+                hint={tr(
+                  "Подножје → Контакт. Клик на број позива телефон.",
+                  "Footer → Contact. Visitors can tap the number to call.",
+                )}
                 full
               >
                 <input
@@ -2115,7 +2329,10 @@ export default function Admin() {
               </Field>
               <Field
                 label={tr("Е-пошта", "Email")}
-                hint={tr("Подножје → Контакт. Клик отвара нову е-пошту.", "Footer → Contact. Visitors can tap it to email you.")}
+                hint={tr(
+                  "Подножје → Контакт. Клик отвара нову е-пошту.",
+                  "Footer → Contact. Visitors can tap it to email you.",
+                )}
                 full
               >
                 <input
@@ -2130,7 +2347,10 @@ export default function Admin() {
               </Field>
               <Field
                 label={tr("Корисничко име", "Handle")}
-                hint={tr("Приказује се испод контакт података у подножју.", "Shown below the contact details in the footer.")}
+                hint={tr(
+                  "Приказује се испод контакт података у подножју.",
+                  "Shown below the contact details in the footer.",
+                )}
                 full
               >
                 <input
@@ -2147,7 +2367,10 @@ export default function Admin() {
               </Field>
               <Field
                 label={tr("Инстаграм", "Instagram")}
-                hint={tr("Линк за Инстаграм икону у подножју. Оставите празно да је сакријете.", "Link for the Instagram icon in the footer. Leave empty to hide it.")}
+                hint={tr(
+                  "Линк за Инстаграм икону у подножју. Оставите празно да је сакријете.",
+                  "Link for the Instagram icon in the footer. Leave empty to hide it.",
+                )}
                 full
               >
                 <input
@@ -2162,7 +2385,10 @@ export default function Admin() {
               </Field>
               <Field
                 label={tr("Фејсбук", "Facebook")}
-                hint={tr("Линк за Фејсбук икону у подножју. Оставите празно да је сакријете.", "Link for the Facebook icon in the footer. Leave empty to hide it.")}
+                hint={tr(
+                  "Линк за Фејсбук икону у подножју. Оставите празно да је сакријете.",
+                  "Link for the Facebook icon in the footer. Leave empty to hide it.",
+                )}
                 full
               >
                 <input
@@ -2177,7 +2403,10 @@ export default function Admin() {
               </Field>
               <Field
                 label={tr("ТикТок", "TikTok")}
-                hint={tr("Линк за ТикТок икону у подножју. Оставите празно да је сакријете.", "Link for the TikTok icon in the footer. Leave empty to hide it.")}
+                hint={tr(
+                  "Линк за ТикТок икону у подножју. Оставите празно да је сакријете.",
+                  "Link for the TikTok icon in the footer. Leave empty to hide it.",
+                )}
                 full
               >
                 <input
@@ -2192,8 +2421,10 @@ export default function Admin() {
               </Field>
             </div>
             <div className="admin-actions">
-              <button className="admin-button">
-                {tr("Сачувај контакт", "Save contact")}
+              <button className="admin-button" disabled={saving}>
+                {saving
+                  ? tr("Чување…", "Saving…")
+                  : tr("Сачувај контакт", "Save contact")}
               </button>
             </div>
           </form>
