@@ -27,4 +27,7 @@ export const isSupabaseConfigured = Boolean(
 export const supabase = createClient(
   url ?? "http://127.0.0.1:54321",
   publishableKey ?? "sb_publishable_local_placeholder",
+  {
+    db: { schema: "babuska" },
+  },
 );
