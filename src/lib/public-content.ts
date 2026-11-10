@@ -279,6 +279,7 @@ export async function fetchPublicContent(
           apikey: config.key,
           Authorization: `Bearer ${config.key}`,
           "Content-Type": "application/json",
+          "Content-Profile": "babuska",
         },
         body: "{}",
         signal: controller.signal,
